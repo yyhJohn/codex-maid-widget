@@ -41,6 +41,7 @@ function harness(variant, { service = null, draftResponse = 0 } = {}) {
     },
     openChatManager() { openCalls++; },
     cancelPose() { calls.push('pose'); }, accountAlarm: cleanup('alarm'), resetForecastSource: cleanup('forecast'),
+    voiceInput: { cancel() {} }, activityTimer: null,
     clearInterval() { calls.push('interval'); }, clearTimeout() { calls.push('timeout'); }, timer: null, authRefreshTimer: null,
     windowMode: cleanup('window'), stopAuthWatch() { calls.push('watch'); }, desktopMonitor: { stop() { calls.push('desktop'); } },
     globalShortcut: { unregisterAll() { calls.push('shortcuts'); } }, source: cleanup('source'), controlServer: cleanup('control'),

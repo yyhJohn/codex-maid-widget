@@ -5,6 +5,7 @@ const { app, BrowserWindow, screen } = require('electron');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const url = require('node:url');
 const vm = require('node:vm');
 const crypto = require('node:crypto');
 const { EventEmitter } = require('node:events');
@@ -58,11 +59,12 @@ function harness(source, file, win, scale, dataDir, display, position, peekAtCor
   const imports = {
     electron: { app: isolatedApp, ipcMain: events, screen: { getCursorScreenPoint: () => cursor, getDisplayMatching: () => display } },
     'node:fs': { mkdirSync(dir, options) { assert.equal(path.resolve(dir), path.resolve(dataDir)); return fs.mkdirSync(dir, options); } },
-    'node:path': path, 'node:http': {}, 'node:crypto': {}, 'node:os': { homedir: () => profile },
+    'node:path': path, 'node:url': url, 'node:http': {}, 'node:crypto': {}, 'node:os': { homedir: () => profile },
     './i18n.js': {setLocale() {}, t: value => value, characterName: value => value?.name || ''},
     './settings.cjs': isolatedSettings, './data-home.cjs': { prepareDataHome: () => dataDir },
     './character-library.cjs': {}, './codex-data.cjs': {}, './codex-desktop.cjs': {}, './auth-change-watch.cjs': {},
     './windows-launch.cjs': {}, './desktop-observation.cjs': {},
+    './voice-input.cjs': { VoiceInput: class { cancel() {} } },
     // This matrix exercises standalone native geometry. The disabled production
     // controller's moveTo returns false; never construct its OS/Codex providers.
     './window-mode.cjs': { CodexWindowMode: class {

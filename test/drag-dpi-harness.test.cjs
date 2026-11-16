@@ -3,6 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const url = require('node:url');
 const os = require('node:os');
 const vm = require('node:vm');
 const { EventEmitter } = require('node:events');
@@ -22,7 +23,7 @@ function fixture() {
   const settingsModule = { ...require('../src/settings.cjs'), writeSettings(target, value) {
     assert.equal(target, file); writes.push(structuredClone(value));
   } };
-  const context = vm.createContext({ assert, path, vm, EventEmitter, profile, settingsModule,
+  const context = vm.createContext({ assert, path, url, vm, EventEmitter, profile, settingsModule,
     fs: { mkdirSync(target) { assert.equal(target, dataDir); } },
     process: { platform: 'win32', env: { CODEX_HOME: path.join(profile, 'codex') } },
     setTimeout, clearTimeout, setInterval, clearInterval,

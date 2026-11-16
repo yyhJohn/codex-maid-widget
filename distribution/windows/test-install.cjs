@@ -99,7 +99,8 @@ function findMcp(folder) {
 async function main() {
   if (process.platform !== 'win32') throw new Error('Windows installer test requires Windows.');
   const before = protectedSystemState();
-  const base = path.join(root, 'tmp');
+  // A long source checkout path can exceed the installer's Windows path limit.
+  const base = os.tmpdir();
   fs.mkdirSync(base, { recursive: true });
   const fixture = fs.mkdtempSync(path.join(base, 'codex-maid-installer-test-'));
   const target = path.join(fixture, '应用 with 空格');

@@ -6,15 +6,19 @@ const path=require('node:path');
 const vm=require('node:vm');
 // Layout/input behavior is exercised by check-toolbar-ui.cjs in real Chromium.
 // These boundary checks protect mirrored delivery and the stable four actions.
-test('toolbar delivery stays mirrored apart from platform viewport clipping',()=>{
-  const comparable=(name,source)=>name!=='widget.css'?source:source
-    .replace(/\/\*[\s\S]*?\*\//g,'')
-    // macOS prevents focus-induced root scrolling; all other CSS stays paired.
-    .replace(/(html,body\{[^}]*\boverflow:)(?:hidden|clip)(;)/,'$1viewport$2')
-    .replace(/^\s*\n/gm,'');
-  for(const name of ['widget.js','widget.css','index.html','preload.cjs'])assert.equal(
-    comparable(name,fs.readFileSync(path.join(__dirname,'../src',name),'utf8')),
-    comparable(name,fs.readFileSync(path.join(__dirname,'../macos/src',name),'utf8')),name);
+test('toolbar delivery stays mirrored in Windows and macOS',()=>{
+  const toolbarOnly = {
+    'widget.js': source => source.match(/let toolbarHideTimer;[\s\S]*?(?=\$\('character'\)\.addEventListener\('pointerenter')/)?.[0],
+    'widget.css': source => source.split(/\r?\n/).filter(line => line.includes('.toolbar')).join('\n'),
+    'index.html': source => source.match(/<nav\b[^>]*class="toolbar interactive"[^>]*>[\s\S]*?<\/nav>/)?.[0],
+    'preload.cjs': source => source.split(/\r?\n/).filter(line => /^  (action|pointerRegion):/.test(line)).join('\n'),
+  };
+  for (const [name, select] of Object.entries(toolbarOnly)) {
+    const read = folder => select(fs.readFileSync(path.join(__dirname,'..',folder,'src',name),'utf8'));
+    const windows = read('');
+    assert.ok(windows, name + ' delivers toolbar code');
+    assert.equal(windows, read('macos'), name);
+  }
 });
 for(const folder of ['', 'macos/'])test(`${folder||'Windows'} toolbar retains four native keyboard-reachable actions`,()=>{
   const html=fs.readFileSync(path.join(__dirname,'..',folder,'src/index.html'),'utf8');

@@ -110,7 +110,7 @@ function controller(variant, options = {}) {
       },
     } },
     'node:fs': noFilesystem,
-    'node:path': path,
+    'node:path': path, 'node:url': require('node:url'),
     'node:http': {}, 'node:crypto': {}, 'node:os': {}, 'node:child_process': {},
     './i18n.js': i18n, './settings.cjs': { ...geometry,
       readSettings(file) { assert.equal(file, fakeSettingsFile); return initial; },
@@ -125,6 +125,7 @@ function controller(variant, options = {}) {
     './character-library.cjs': {}, './codex-data.cjs': {}, './codex-desktop.cjs': {},
     './auth-change-watch.cjs': {}, './windows-launch.cjs': {}, './macos-launch.cjs': {},
     './platform.cjs': { supportsDesktopFollow: () => false }, './desktop-observation.cjs': {},
+    './voice-input.cjs': { VoiceInput: class { cancel() {} } },
   };
   const context = {
     require(name) {
