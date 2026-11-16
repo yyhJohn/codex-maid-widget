@@ -143,7 +143,7 @@ async function harness(variant, options = {}) {
       super(); this.bounds = { x: 400, y: 400, width: options.width, height: options.height }; this.visible = false;
       this.webContents = new EventEmitter();
       Object.assign(this.webContents, { send(name, value) { messages.push({ name, value: plain(value) }); },
-        setWindowOpenHandler() {}, session: { setPermissionRequestHandler() {} } });
+        setWindowOpenHandler() {}, session: { setPermissionRequestHandler() {}, setPermissionCheckHandler() {} } });
       windows.push(this);
     }
     isDestroyed() { return this.destroyed === true; } getBounds() { return { ...this.bounds }; }
@@ -170,6 +170,8 @@ async function harness(variant, options = {}) {
     './codex-window.cjs': { CodexWindowProvider: class { constructor() { throw new Error('Native provider must remain isolated'); } } },
   });
   const modules = {
+    'node:url': require('node:url'),
+    './voice-input.cjs': { VoiceInput: class { available() { return false; } cancel() {} } },
     electron: { app, BrowserWindow: Window, ipcMain, screen,
       net: { fetch() { throw new Error('Account fixtures must never access the network'); } },
       get Notification() { throw new Error('Account reminders must never access system notifications'); },

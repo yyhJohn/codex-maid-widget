@@ -44,7 +44,7 @@ for (const variant of ['..', '../macos']) {
       library.rename(artwork.id, artwork.name + '（我的命名）');
       assert.equal(new CharacterLibrary(options).get(artwork.id).name, artwork.name + '（我的命名）');
     }
-    assert.equal(library.list().filter(entry => entry.builtIn).length, 4);
+    assert.equal(library.list().filter(entry => entry.builtIn).length, variant === '..' ? 5 : 4);
     assert.equal(library.list().filter(entry => !entry.builtIn).length, 0);
   });
 }

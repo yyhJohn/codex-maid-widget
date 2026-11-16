@@ -10,6 +10,17 @@ contextBridge.exposeInMainWorld('maid', {
   listConversations: () => ipcRenderer.invoke('list-conversations'),
   selectConversation: id => ipcRenderer.invoke('select-conversation', id),
   getChatState: () => ipcRenderer.invoke('chat-state'),
+  voiceInputAvailable: () => ipcRenderer.invoke('voice-input-available'),
+  beginVoiceInput: () => ipcRenderer.invoke('voice-input-begin'),
+  voiceMicrophoneStarted: id => ipcRenderer.invoke('voice-input-started', id),
+  cancelVoiceInput: id => ipcRenderer.invoke('voice-input-cancel', id),
+  previewVoiceInput: (id, pcm) => ipcRenderer.invoke('voice-input-preview', id, pcm),
+  transcribeVoiceInput: (id, pcm) => ipcRenderer.invoke('voice-input-transcribe', id, pcm),
+  onVoiceInputCancelled: callback => {
+    const listener = () => callback();
+    ipcRenderer.on('voice-input-cancelled', listener);
+    return () => ipcRenderer.removeListener('voice-input-cancelled', listener);
+  },
   chooseChatDirectory: input => ipcRenderer.invoke('chat-choose-directory', input),
   initializeChat: input => ipcRenderer.invoke('chat-initialize', input),
   getChatMemory: input => ipcRenderer.invoke('chat-memory', input),

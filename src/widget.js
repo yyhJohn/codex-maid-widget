@@ -5,6 +5,24 @@ const locale = () => i18n?.getLocale() || 'zh-CN';
 const $ = id => document.getElementById(id);
 const mirrorFlip = window.MaidMirrorFlip?.create({ image: $('maid-image') });
 let current, mode = 'quota', hideTimer, noticeTimer, phraseIndex = -1, lastTurnTimestamp, initializedTurn = false;
+let characterWaveTimer;
+function renderCharacterImage(replayWave = false) {
+  const image = $('maid-image'), motion = current.characterMotion;
+  const pose = characterWaveTimer ? 'wave' : motion?.pose;
+  const url = motion?.urls[pose] || current.characterUrl;
+  if (motion) image.dataset.motion = pose;
+  else delete image.dataset.motion;
+  if (image.src !== url || replayWave) image.src = url;
+}
+function waveCharacter() {
+  if (!current?.characterMotion?.urls.wave) return;
+  clearTimeout(characterWaveTimer);
+  characterWaveTimer = setTimeout(() => {
+    characterWaveTimer = undefined;
+    renderCharacterImage();
+  }, 840);
+  renderCharacterImage(true);
+}
 let displayed = null, animationId;
 const modes = ['quota','conversation','accounts','today','week','lastTurn','phrase','resetForecast','chat'];
 let miniChat;
@@ -620,10 +638,10 @@ function reveal() {
   clearTimeout(hideTimer);
   const enabled = current?.settings.showBubble !== false;
   setBubbleVisible(enabled);
-  if (enabled && current?.settings.autoHideSeconds && !miniChat?.isExpanded) hideTimer = setTimeout(() => setBubbleVisible(false), current.settings.autoHideSeconds * 1000);
+  if (enabled && current?.settings.autoHideSeconds && !miniChat?.isExpanded && !miniChat?.voiceBusy) hideTimer = setTimeout(() => setBubbleVisible(false), current.settings.autoHideSeconds * 1000);
 }
 function setBubbleVisible(visible) {
-  if (!visible) miniChat?.setExpanded(false, false);
+  if (!visible) miniChat?.setVisible(false);
   $('bubble').classList.toggle('hidden-bubble', !visible);
   $('bubble').inert = !visible;
   $('bubble').setAttribute('aria-hidden', String(!visible));
@@ -750,7 +768,11 @@ function render(value) {
     if (mode === 'accounts') $('bubble').title = t('本机历史账号 · 五小时周期推算；点击刷新，使用左右箭头翻页');
   }
   updatePageNavigation();
-  if ($('maid-image').src !== value.characterUrl) $('maid-image').src = value.characterUrl;
+  if (characterChanged) {
+    clearTimeout(characterWaveTimer);
+    characterWaveTimer = undefined;
+  }
+  renderCharacterImage();
   $('maid-image').alt = value.characterName || t('桌面女仆形象');
   $('widget').classList.toggle('is-mirrored', value.settings.mirror);
   mirrorFlip?.setMirrored(value.settings.mirror, { initial });
@@ -822,7 +844,14 @@ document.addEventListener('keydown', e => {
   if(e.target.closest('select,input,textarea,button')) return;
   if(e.key.toLowerCase() === 'q' || e.key === ' ' || (e.key === 'Enter' && e.target === $('character'))) { e.preventDefault(); if (!e.repeat && interactionKey === null && pressInteraction()) interactionKey = e.key.toLowerCase(); }
 });
-document.addEventListener('keyup', e => { if (interactionKey !== null && e.key.toLowerCase() === interactionKey) { e.preventDefault(); interactionKey = null; releaseInteraction(); } });
+document.addEventListener('keyup', e => {
+  if (interactionKey === null || e.key.toLowerCase() !== interactionKey) return;
+  e.preventDefault();
+  const activateCharacter = e.target === $('character') && (interactionKey === 'enter' || interactionKey === ' ');
+  interactionKey = null;
+  releaseInteraction();
+  if (activateCharacter) waveCharacter();
+});
 window.addEventListener('blur', () => { interactionKey = null; releaseInteraction(); clearBounceMotion(); dismissCharacterFocus(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { dismissNotices(); interactionKey = null; clearBounce(); dismissCharacterFocus(); } });
 window.addEventListener('beforeunload', dismissNotices);
@@ -837,7 +866,25 @@ for (const target of [$('character'), $('bubble')]) {
   let start, moved = false;
   target.addEventListener('pointerdown', e => { if(e.button !== 0 || start || e.target.closest('button,select,option,input,form,.account-list')) return; start = {x:e.screenX,y:e.screenY,pointerId:e.pointerId,interaction:target.id === 'character' && pressInteraction()}; noticeDragDepth++; moved = false; target.setPointerCapture(e.pointerId); window.maid.drag('start'); });
   target.addEventListener('pointermove', e => { if(!start || start.pointerId !== e.pointerId) return; if(e.buttons === 0) { cancel(e); return; } if(Math.hypot(e.screenX-start.x,e.screenY-start.y)>4) { if(!moved) { if(start.interaction && interactionHeld) { $('widget').classList.add('drag-interaction'); for(const id of ['character','bubble-motion']) $(id).classList.add('interaction-pressed'); } clearBounceMotion(true); } moved=true; } if(moved) window.maid.drag('move'); });
-  const finish = e => { if(!start || start.pointerId !== e.pointerId || e.button !== 0) return; const active=start; window.maid.drag('end'); start=null; noticeDragDepth=Math.max(0,noticeDragDepth-1); if(active.interaction) releaseInteraction(); if(target.hasPointerCapture(e.pointerId)) target.releasePointerCapture(e.pointerId); if(!moved) { if(target.id === 'bubble') { if(conversationVisible) void inspectConversation(); else void doRefresh(); } else if(mode==='phrase') nextPhrase(); } drainAccountResetNotices(); };
+  const finish = e => {
+    if (!start || start.pointerId !== e.pointerId || e.button !== 0) return;
+    const active = start;
+    window.maid.drag('end');
+    start = null;
+    noticeDragDepth = Math.max(0, noticeDragDepth - 1);
+    if (active.interaction) releaseInteraction();
+    if (target.hasPointerCapture(e.pointerId)) target.releasePointerCapture(e.pointerId);
+    if (!moved) {
+      if (target.id === 'bubble') {
+        if (conversationVisible) void inspectConversation();
+        else void doRefresh();
+      } else {
+        waveCharacter();
+        if (mode === 'phrase') nextPhrase();
+      }
+    }
+    drainAccountResetNotices();
+  };
   const cancel = e => { if(start && start.pointerId === e.pointerId) { const active=start; window.maid.drag('end'); start=null; noticeDragDepth=Math.max(0,noticeDragDepth-1); if(active.interaction) releaseInteraction(); clearBounceMotion(); if(target.hasPointerCapture(e.pointerId)) target.releasePointerCapture(e.pointerId); drainAccountResetNotices(); } };
   target.addEventListener('pointerup', finish);
   target.addEventListener('pointercancel', cancel);

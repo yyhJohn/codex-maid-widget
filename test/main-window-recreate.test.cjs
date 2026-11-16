@@ -46,8 +46,12 @@ function harness(variant, { manuallyHidden = false, deferredLoads = false } = {}
       super(); this.options = options; this.destroyed = false; this.visible = false; this.destroyCalls = 0;
       this.bounds = { x: 0, y: 0, width: options.width, height: options.height };
       this.webContents = new EventEmitter();
+      this.webContents.send = () => {};
       this.webContents.setWindowOpenHandler = callback => { this.openHandler = callback; };
-      this.webContents.session = { setPermissionRequestHandler: callback => { this.permissionHandler = callback; } };
+      this.webContents.session = {
+        setPermissionRequestHandler: callback => { this.permissionHandler = callback; },
+        setPermissionCheckHandler: callback => { this.permissionCheckHandler = callback; },
+      };
       this.loadPromise = new Promise((resolve, reject) => { this.resolveLoad = resolve; this.rejectLoad = reject; });
       windows.push(this);
     }
@@ -75,6 +79,8 @@ function harness(variant, { manuallyHidden = false, deferredLoads = false } = {}
   }
   const globals = {
     module: { exports: {} }, __dirname: path.join(variant.root, 'src'), path,
+    pathToFileURL: require('node:url').pathToFileURL,
+    voiceInput: { cancel() {}, permitsMicrophone() { return false; } },
     require(name) { throw new Error('No runtime dependency is allowed in the isolated lifecycle VM: ' + name); },
     BrowserWindow: FakeWindow,
     app: { quit() { quitCalls++; } }, windowIcon: 'isolated:test-icon',

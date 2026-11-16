@@ -35,6 +35,8 @@ The explicit preparation command downloads the pinned public multilingual encode
 
 Only after an explicit release request, run `node distribution/windows/build.cjs` and `node distribution/windows/test-install.cjs` to generate and verify an installer. Daily local updates do not generate installers.
 
+For an installer with Windows x64 offline Mandarin dictation, install CMake and Visual Studio 2022 C++ Build Tools, then run `powershell -NoProfile -File scripts/prepare-voice-engine.ps1` and `node distribution/windows/build.cjs --with-voice` after the portable build. The engine is built from a checksum-pinned [whisper.cpp v1.9.5 source revision](https://github.com/ggml-org/whisper.cpp/tree/d1be6fde11ac6e0407606b4e42fe72d34add8037). The installer packages the CPU engine and public model download instructions. The three speech weights are downloaded and SHA-256 checked by the installed model setup tool.
+
 The installer builder uses Inno Setup. If its local compiler is missing, the bootstrap script downloads the pinned official compiler and verifies its checksum and publisher signature. You may instead provide its executable through `ISCC_PATH`.
 
 The installer test uses a dedicated temporary installation and isolated widget/Codex profiles. It verifies installation, runtime controls, bundled-runtime MCP, upgrade, uninstall, and user-data preservation. It must not be redirected to a real user's installation or personal Codex profile.

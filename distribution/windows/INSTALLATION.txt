@@ -7,6 +7,15 @@ Use the Start menu or desktop shortcut to open the widget. Existing Windows
 features and behavior are preserved. Widget preferences and imported
 characters are stored in your user profile under .codex-maid-widget.
 
+In the voice-enabled installer, launch the widget once, then run "Install
+offline voice models" in the Codex Maid Widget Start menu folder. This
+downloads about 3.3 GB of public Whisper and Silero model weights and checks
+their SHA-256 hashes. Restart the widget and enable its chat page if needed.
+Use the microphone to dictate, review the resulting draft, and send it
+yourself. The speech engine runs on this computer.
+
+Select "GPT Girl · Animated" in Settings > Characters to use the dragon girl.
+
 To enable maid tools inside Codex, select "Connect Codex plugin" at the end of
 installation, or use "Connect Codex plugin" in the Start menu. Codex itself must
 already be installed. The connection wizard can locate Codex or ask you to choose

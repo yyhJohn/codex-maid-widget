@@ -30,7 +30,7 @@ function run(command, args) {
   if (result.status !== 0) throw new Error(`${path.basename(command)} failed (${result.status}).`);
 }
 
-async function build() {
+async function build({ withVoice = false } = {}) {
   const { checkVersions } = require('../check-versions.cjs');
   const version = checkVersions({ root });
   console.log(`Application versions aligned: Windows = macOS = ${version}`);
@@ -55,9 +55,28 @@ async function build() {
   for (const file of ['LICENSE', 'NOTICE', 'ARTWORK_LICENSE.md']) fs.copyFileSync(path.join(root, file), path.join(helper, file));
   fs.cpSync(path.join(root, 'licenses'), path.join(helper, 'licenses'), { recursive: true });
   fs.copyFileSync(path.join(root, 'assets/app-icon.ico'), path.join(helper, 'app-icon.ico'));
+  if (withVoice) {
+    const engine = path.join(root, 'tmp/voice-engine/payload');
+    const target = path.join(stage, 'resources/voice-engine');
+    const files = fs.readdirSync(engine, { withFileTypes: true });
+    const required = ['maid-voice-worker.exe', 'ggml.dll', 'ggml-base.dll', 'ggml-cpu-x64.dll', 'whisper.dll', 'LICENSE-whisper.cpp.txt'];
+    if (!required.every(name => files.some(entry => entry.name === name && entry.isFile()))) {
+      throw new Error('Run scripts/prepare-voice-engine.ps1 before building the voice-enabled installer.');
+    }
+    fs.mkdirSync(target);
+    for (const entry of files) {
+      if (!entry.isFile() || !required.includes(entry.name) && !/^ggml-cpu-[a-z0-9-]+\.dll$/.test(entry.name)) {
+        throw new Error('Unexpected voice engine payload: ' + entry.name);
+      }
+      fs.copyFileSync(path.join(engine, entry.name), path.join(target, entry.name));
+    }
+    fs.copyFileSync(path.join(__dirname, 'install-voice-models.ps1'), path.join(helper, 'install-voice-models.ps1'));
+    fs.copyFileSync(path.join(root, 'assets/voice-models.json'), path.join(helper, 'voice-models.json'));
+  }
   if (!fs.existsSync(compiler)) run('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(__dirname, 'bootstrap-inno.ps1')]);
   fs.mkdirSync(output, { recursive: true });
-  run(compiler, [`/DPayloadDir=${stage}`, `/DOutputDir=${output}`, `/DAppVersion=${manifest.version}`, path.join(__dirname, 'installer.iss')]);
+  run(compiler, [`/DPayloadDir=${stage}`, `/DOutputDir=${output}`, `/DAppVersion=${manifest.version}`,
+    ...(withVoice ? ['/DHasVoiceEngine=1'] : []), path.join(__dirname, 'installer.iss')]);
   const after = inventory(portable);
   if (JSON.stringify(before) !== JSON.stringify(after)) throw new Error('Original Windows portable files changed during installer build.');
   const name = `Codex-Maid-Widget-${manifest.version}-windows-x64-setup.exe`;
@@ -71,5 +90,5 @@ async function build() {
   return info;
 }
 
-if (require.main === module) build().catch(error => { console.error(error); process.exitCode = 1; });
+if (require.main === module) build({ withVoice: process.argv.includes('--with-voice') }).catch(error => { console.error(error); process.exitCode = 1; });
 module.exports = { build, inventory, hashFile };

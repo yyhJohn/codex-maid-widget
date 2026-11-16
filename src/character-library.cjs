@@ -15,6 +15,14 @@ const BUILT_INS = Object.freeze([
   { id: 'frost-glass-idle', name: '小龙娘-端庄', file: 'characters/frost-glass-idle.png' },
   { id: 'mint-maid', name: '薄荷女仆', file: 'maid.png' },
   { id: 'lilac-dragon', name: '紫晶龙女仆', file: 'characters/lilac-dragon.png' },
+  {
+    id: 'gpt-girl', name: 'GPT 小龙娘（动态）', file: 'characters/gpt-girl/idle.webp',
+    motions: {
+      working: 'characters/gpt-girl/running.webp',
+      completed: 'characters/gpt-girl/review.webp',
+      wave: 'characters/gpt-girl/jumping.webp',
+    },
+  },
 ]);
 
 function libraryError(code, message, cause) {
@@ -172,6 +180,9 @@ class CharacterLibrary {
 
   _entry(record, builtIn) {
     const file = this._pathFor(record, builtIn);
+    const motions = record.motions && Object.fromEntries(
+      Object.entries(record.motions).map(([pose, name]) => [pose, pathToFileURL(this._pathFor({ file: name }, true)).href]),
+    );
     return {
       id: record.id,
       name: builtIn ? this.nameOverrides[record.id] || record.name : record.name,
@@ -179,6 +190,7 @@ class CharacterLibrary {
       url: pathToFileURL(file).href,
       builtIn,
       available: this._available(file, builtIn),
+      ...(motions ? { motions } : {}),
     };
   }
 

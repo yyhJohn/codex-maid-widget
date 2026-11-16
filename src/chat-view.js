@@ -154,11 +154,30 @@
     if (!view || typeof maid?.getChatState !== 'function') return null;
     const status = document.getElementById('chat-mini-status'), messages = document.getElementById('chat-mini-messages');
     const input = document.getElementById('chat-mini-input'), form = document.getElementById('chat-mini-form');
+    const voicePreview = document.getElementById('chat-mini-voice-preview');
     const send = document.getElementById('chat-mini-send'), manage = document.getElementById('chat-mini-manage');
     const panel=document.getElementById('chat-compose-panel'),slot=document.getElementById('chat-compose-slot'),body=document.getElementById('chat-compose-body');
     const expand=document.getElementById('chat-mini-expand'),close=document.getElementById('chat-compose-close'),hint=document.getElementById('chat-compose-hint');
     let state = null, pending = false, inputDirty = false,expanded=false,composing=false,pendingExpansion=null,failure='';
-    const updateSend=()=>{send.disabled=!state?.ready||pending||state.generating||state.unknownExecution||state.reconciling||!input.value.trim();};
+    let voice, pendingVoiceText = '';
+    const updateSend=()=>{send.disabled=!state?.ready||pending||state.generating||state.unknownExecution||state.reconciling||voice?.busy||!input.value.trim();};
+    function renderStatus() {
+      const feedback = voice?.status || failure;
+      status.textContent = feedback ? t(feedback) : readinessText(state, t);
+      status.title = status.textContent;
+    }
+    function appendVoiceText(text) {
+      if (composing) { pendingVoiceText += text; return; }
+      const end = input.value.length;
+      input.setRangeText(text, end, end, 'end');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    function showVoicePreview(text) {
+      if (!voicePreview) return;
+      voicePreview.textContent = text;
+      voicePreview.hidden = !text;
+      voicePreview.scrollTop = voicePreview.scrollHeight;
+    }
     const setExpanded=(value,focus=true)=>{
       if(!panel||!slot||!body)return;
       if(composing){pendingExpansion={value,focus};return;}
@@ -168,7 +187,7 @@
       if(focus){input.focus({preventScroll:true});input.setSelectionRange(start,end,direction);onFocus();}
     };
     const render = value => {
-      state = value; status.textContent = failure?t(failure):readinessText(value, t);status.title=status.textContent;
+      state = value; renderStatus();
       view.classList.toggle('is-ready',value.ready===true);view.classList.toggle('is-busy',pending||value.generating===true||value.reconciling===true);
       renderMessages(messages, value.messages?.slice(-2), t,{followEnd:true});
       if (!inputDirty && input.value !== value.draft) input.value = value.draft || '';
@@ -177,7 +196,16 @@
       if(hint)hint.textContent=t('Enter 换行 · Ctrl+Enter 发送');
     };
     input.addEventListener('input', () => { inputDirty=true;failure='';updateSend();onFocus(); void Promise.resolve(maid.setChatDraft({ scope: 'chat', text: input.value })).catch(()=>{failure='草稿暂未同步，请保留当前输入';if(state)render(state);}); });
-    input.addEventListener('compositionstart',()=>{composing=true;});input.addEventListener('compositionend',()=>{composing=false;if(pendingExpansion){const next=pendingExpansion;pendingExpansion=null;setExpanded(next.value,next.focus);}});
+    input.addEventListener('compositionstart',()=>{composing=true;});
+    input.addEventListener('compositionend',()=>{
+      composing=false;
+      if(pendingExpansion){const next=pendingExpansion;pendingExpansion=null;setExpanded(next.value,next.focus);}
+      if (pendingVoiceText) {
+        const text = pendingVoiceText;
+        pendingVoiceText = '';
+        queueMicrotask(() => appendVoiceText(text));
+      }
+    });
     input.addEventListener('keydown',event=>{
       if(event.isComposing||composing)return;
       if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();form.requestSubmit();}
@@ -187,17 +215,25 @@
     close?.addEventListener('click',()=>setExpanded(false));
     view.addEventListener('focusin', onFocus); view.addEventListener('focusout', onBlur);
     form.addEventListener('submit', async event => {
-      event.preventDefault(); if (!state?.ready || pending ||state.reconciling||state.generating||state.unknownExecution||!input.value.trim()) return;
+      event.preventDefault(); if (!state?.ready || pending ||state.reconciling||state.generating||state.unknownExecution||voice?.busy||!input.value.trim()) return;
       failure='';pending = true; send.disabled = true;view.classList.add('is-busy');
       try { const text=input.value,value=await maid.sendChat({text});if(input.value===text)inputDirty=false;render(value); }
       catch (error) { failure=error?.message || '消息仍保留，请在健康面板查看未就绪原因';status.textContent=t(failure); }
       finally { pending = false; if (state) render(state); }
     });
     manage.addEventListener('click', event => { event.stopPropagation(); void maid.openChatManager(); });
+    voice = document.defaultView?.MaidVoiceRecorder?.mount({
+      button: document.getElementById('chat-mini-voice'), maid, t, onText: appendVoiceText,
+      onPreview: showVoicePreview,
+      onChange: () => { renderStatus(); updateSend(); onFocus(); },
+    });
     const unsubscribe = maid.onChatState?.(render);
     return { refresh: () => maid.getChatState().then(render).catch(() => { status.textContent = t('聊天资料暂不可用，原文件已保留'); }), render,
-      retranslate: () => { if (state) render(state); },setExpanded,setVisible:value=>{if(!value)setExpanded(false,false);},get isExpanded(){return expanded;},
-      dispose: () => unsubscribe?.() };
+      retranslate: () => { voice?.paint(); if (state) render(state); }, setExpanded,
+      setVisible: value => { if (!value) { voice?.cancel(); setExpanded(false, false); } },
+      get isExpanded() { return expanded; },
+      get voiceBusy() { return voice?.busy === true; },
+      dispose: () => { voice?.dispose(); unsubscribe?.(); } };
   }
   return { readinessText, renderMessages, mountMini, mountModels, imageData, statusText, dreamPresentation, searchPresentation, memorySyncPresentation };
 });

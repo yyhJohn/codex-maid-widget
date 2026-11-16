@@ -116,7 +116,7 @@ function controller(variant, options = {}) {
       super(); this.destroyed = false;
       this.webContents = Object.assign(new EventEmitter(), {
         mainFrame: {}, send(name, value) { if (name === 'state') settingsBroadcasts.push(plain(value)); },
-        setWindowOpenHandler() {}, session: { setPermissionRequestHandler() {} },
+        setWindowOpenHandler() {}, session: { setPermissionRequestHandler() {}, setPermissionCheckHandler() {} },
       });
       settingsWindow = this;
     }
@@ -131,6 +131,8 @@ function controller(variant, options = {}) {
   Object.assign(app, { isPackaged: false, getPath: () => fakeHome, setName() {}, setPath() {},
     getVersion: () => 'isolated-test', requestSingleInstanceLock: () => false, quit() {} });
   const modules = {
+    'node:url': require('node:url'),
+    './voice-input.cjs': { VoiceInput: class { available() { return false; } cancel() {} } },
     electron: { app, ipcMain, BrowserWindow: SettingsWindow, Menu: { buildFromTemplate: value => value }, screen: {
       getCursorScreenPoint: () => ({ ...cursor }), getPrimaryDisplay: () => ({ workArea: desktopArea }),
       getDisplayMatching: () => ({ workArea: desktopArea }), screenToDipRect: (_window, value) => ({ ...value }),

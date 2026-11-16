@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.16 — Animated GPT Girl and offline Mandarin input for Windows
+
+- Add GPT Girl with idle, working, completion and click-to-wave animations. Work and completion use local Codex turn events.
+- Add offline Mandarin dictation with a live preview and a final transcription appended to the draft. Send the reviewed draft manually.
+- Package the Windows x64 CPU speech engine and a one-time downloader that verifies the model weights.
+
+- 新增动态 GPT 小龙娘，按本机 Codex 任务状态切换待机、工作和完成动作，单击挥手。
+- 新增离线中文语音输入。录音时显示实时预览，最终结果追加到草稿末尾，由用户确认后发送。
+- Windows x64 安装包内置 CPU 语音引擎，模型由开始菜单中的安装工具下载并校验。
+
 ## 0.5.15 — Project relocation and CI maintenance
 
 - Fix chat-project relocation on Node versions that reject an already-created copy destination. Existing projects are preserved, and overlapping or occupied destinations remain rejected.

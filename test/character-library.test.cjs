@@ -25,6 +25,7 @@ function fixture(t, options = {}) {
   fs.writeFileSync(path.join(assetRoot, 'characters', 'lilac-dragon.png'), PNG);
   // Keep each new built-in distinct so fixture hashes do not mask duplicate detection.
   for (const id of ['frost-glass-idle', 'frost-glass-cheek']) fs.copyFileSync(path.join(__dirname, '../assets/characters', id + '.png'), path.join(assetRoot, 'characters', id + '.png'));
+  fs.cpSync(path.join(__dirname, '../assets/characters/gpt-girl'), path.join(assetRoot, 'characters/gpt-girl'), { recursive: true });
   const library = new CharacterLibrary({ dataDir, assetRoot, ...options });
   return {
     root, dataDir, assetRoot, sources, library,
@@ -41,7 +42,15 @@ test('built-in entries have stable ids and do not need a manifest', t => {
     { id: 'frost-glass-idle', name: '小龙娘-端庄', available: true, builtIn: true },
     { id: 'mint-maid', name: '薄荷女仆', available: true, builtIn: true },
     { id: 'lilac-dragon', name: '紫晶龙女仆', available: true, builtIn: true },
+    { id: 'gpt-girl', name: 'GPT 小龙娘（动态）', available: true, builtIn: true },
   ]);
+  const dragon = library.get('gpt-girl');
+  assert.equal(path.basename(fileURLToPath(dragon.url)), 'idle.webp');
+  assert.deepEqual(Object.fromEntries(Object.entries(dragon.motions).map(([pose, url]) => {
+    const file = fileURLToPath(url);
+    assert.ok(fs.existsSync(file));
+    return [pose, path.basename(file)];
+  })), { working: 'running.webp', completed: 'review.webp', wave: 'jumping.webp' });
   assert.equal(fs.existsSync(library.manifestPath), false);
   assert.equal(library.get('missing'), null);
 });
@@ -79,7 +88,7 @@ test('same bytes deduplicate across names, batches, restarts and built-ins', t =
   const duplicate = restored.importFiles([first]);
   assert.equal(duplicate.imported.length, 0);
   assert.equal(duplicate.existing[0].id, result.imported[0].id);
-  assert.equal(restored.list().length, 5);
+  assert.equal(restored.list().filter(entry => !entry.builtIn).length, 1);
 });
 
 test('each bad image is reported while good files in the same batch are still imported', t => {
@@ -97,7 +106,7 @@ test('each bad image is reported while good files in the same batch are still im
   assert.equal(result.imported[0].name, 'good');
   assert.deepEqual(result.errors.map(error => error.name), ['fake.png', 'renamed.jpg', 'image.svg', 'oversized.png']);
   assert.match(result.errors[3].message, /15 MB/);
-  assert.equal(library.list().length, 5);
+  assert.equal(library.list().filter(entry => !entry.builtIn).length, 1);
 });
 
 test('optional decoder can reject a signed but undecodable image without saving a copy', t => {
@@ -149,7 +158,7 @@ test('missing custom files remain visible as unavailable and can be removed safe
   const restored = reopen();
   assert.equal(restored.get(entry.id).available, false);
   assert.equal(restored.remove(entry.id), true);
-  assert.equal(restored.list().length, 4);
+  assert.equal(restored.list().filter(entry => !entry.builtIn).length, 0);
 });
 
 test('legacy images migrate once, preserve their originals and recognize the old built-in path', t => {
@@ -162,7 +171,7 @@ test('legacy images migrate once, preserve their originals and recognize the old
   assert.equal(library.migrateLegacy(path.join(assetRoot, 'maid.png')).id, 'mint-maid');
   assert.equal(library.migrateLegacy(''), null);
   assert.throws(() => library.migrateLegacy(path.join(assetRoot, 'missing.png')), { code: 'LEGACY_CHARACTER_IMPORT_FAILED' });
-  assert.equal(library.list().length, 5);
+  assert.equal(library.list().filter(entry => !entry.builtIn).length, 1);
 });
 
 test('malformed and traversal manifests are preserved byte-for-byte with recoverable images', t => {
@@ -204,7 +213,7 @@ test('failed atomic commits retain the previous library and remove partial impor
   } finally { fs.renameSync = originalRename; }
   assert.deepEqual(fs.readFileSync(library.manifestPath), before);
   assert.deepEqual(fs.readdirSync(library.directory), ['library.json']);
-  assert.equal(reopen().list().length, 4);
+  assert.equal(reopen().list().filter(entry => !entry.builtIn).length, 0);
 });
 
 test('failed delete commit restores both the record and the image copy', t => {

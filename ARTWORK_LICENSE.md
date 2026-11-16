@@ -32,3 +32,7 @@ When sharing or adapting covered artwork, provide appropriate credit, link to [C
 No trademark, publicity, privacy, or other third-party rights are granted. The grant applies only to rights the contributors can license, and does not assert that every AI-generated element attracts copyright in every jurisdiction.
 
 Code and documentation use the separate [MIT license](LICENSE).
+
+## GPT Girl animations
+
+The four WebP files in `assets/characters/gpt-girl/` are unmodified [GPT Girl animations by weit0529](https://github.com/weit0529/gpt-pet/tree/125c3da9a5dc040518e791fc3d75282aa993755f). The source repository credits @ZipZipPipe and @这个刀子真甜 for reference artwork and shares its generated animation assets under its [included MIT license](assets/characters/gpt-girl/LICENSE.txt).

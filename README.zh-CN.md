@@ -31,7 +31,7 @@
 
 更新说明和 SHA-256 校验值放在 [Releases](https://github.com/Feeesack/codex-maid-widget/releases)。安装包已带上运行环境和可选的本地 Codex 插件，不用另装 Node.js、npm，也不用下载源码。
 
-当前源码维护版本为 **0.5.15**，修复聊天项目目录迁移并更新 CI 测试夹具；上方下载仍是已发布的 **v0.5.14** 安装包。详见[更新记录](CHANGELOG.md)。
+本 fork 的 **Windows x64 v0.5.16** 加入动态 GPT 小龙娘和离线中文语音输入。[下载安装包与校验值](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.16) · [语音模型安装方法](docs/INSTALLATION.md#windows-fork-release) · [更新记录](CHANGELOG.md)
 
 [0.3.48 发布说明](docs/releases/0.3.48.md)汇总了 0.3.21 以来的更新：按下／抬起两段互动，含「DSH 小黄鸭」的五套音色，多账号重置提醒，两种新小龙娘形象，对话上下文、压缩次数与 Git 状态，Motion 镜像动画，Hugeicons 图标，页面排序与显隐，外观及探头宽度实时预览，以及 Windows 安装路径修复。各音效来源与独立许可范围见[音频资料](docs/interaction-audio.md)。
 

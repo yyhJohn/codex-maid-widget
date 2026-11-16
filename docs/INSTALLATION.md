@@ -15,7 +15,17 @@ The planned [Release page](https://github.com/Feeesack/codex-maid-widget/release
 
 Real quota requires the official Codex desktop app to be installed and signed in. Optional companion chat requires a ChatGPT login accepted by the installed Codex client and a verified available model. The widget does not sign you in or include account credentials. Chat and model-based memory maintenance consume that account's quota; quota display alone makes no model requests.
 
-## Windows
+## Windows fork release
+
+[Windows x64 v0.5.16 and SHA-256](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.16)
+
+- Select **GPT Girl · Animated** under **Settings → Characters**. The dragon girl types while Codex is working, celebrates on completion, and waves when clicked.
+- Launch the widget once. In the **Codex Maid Widget** Start menu folder, open **Install offline voice models** and wait for the approximately 3.3 GB one-time download and SHA-256 checks. For a custom widget data directory, pass `-DataDir "D:\path\to\data"` to the installed `resources/installer/install-voice-models.ps1`.
+- Restart the widget and enable the companion chat page. Click the microphone to start and stop. The live preview can revise earlier words, and the final transcript is appended to the draft. Review it and send it yourself. Speech recognition runs locally on the CPU with [Whisper](https://huggingface.co/ggerganov/whisper.cpp) and [Silero VAD](https://huggingface.co/ggml-org/whisper-vad).
+
+先打开挂件一次，再从开始菜单的 **Codex Maid Widget → Install offline voice models** 下载并校验约 3.3 GB 的模型。重启后，在聊天框用麦克风录入。到 **设置 → 形象库** 选择 **GPT 小龙娘（动态）**。
+
+## Windows installation
 
 1. Download and run the Windows installer.
 2. Choose the installation location and optional shortcuts. Installation defaults to the current user's application area and does not need administrator privileges.

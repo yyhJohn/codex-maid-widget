@@ -2,6 +2,7 @@
 const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, globalShortcut, dialog, net } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 const http = require('node:http');
 const crypto = require('node:crypto');
 const os = require('node:os');
@@ -14,12 +15,14 @@ const { CodexDesktopMonitor, buildLaunchArgs } = require('./codex-desktop.cjs');
 const { watchAuthChanges } = require('./auth-change-watch.cjs');
 const { launchThroughExplorer } = require('./windows-launch.cjs');
 const { prepareDataHome } = require('./data-home.cjs');
+const { VoiceInput } = require('./voice-input.cjs');
 const { readDesktopObservation } = require('./desktop-observation.cjs');
 app.setName('codex-maid-widget');
 const demoMode = process.argv.includes('--demo');
 const root = path.join(__dirname, '..');
 const windowIcon = process.platform === 'win32' ? path.join(root, 'assets', 'app-icon.ico') : path.join(root, 'assets', 'icons', 'app-256.png');
 const dataDir = prepareDataHome({legacyDir:app.getPath('userData')});
+const voiceInput = new VoiceInput(dataDir);
 process.env.CODEX_MAID_HOME = dataDir;
 fs.mkdirSync(dataDir,{recursive:true});
 app.setPath('userData',dataDir);
@@ -42,6 +45,7 @@ function notifyAccountReset(event) {
 }
 let widget, settingsWindow, chatWindow, chatService, tray, source, timer, controlServer, library, desktopMonitor, stopAuthWatch, authRefreshTimer;
 let resetForecastSource;
+let activityReader, activityTimer, activityPending = false, activityPose = 'idle';
 let followRegistered = null, followLaunchGeneration = 0, refreshGeneration = 0;
 const followSupported = process.platform === 'win32' && app.isPackaged && !demoMode;
 let followError = '';
@@ -60,7 +64,9 @@ function state() {
   const active = characters.find(item => item.id === settings.activeCharacterId && item.available) || characters.find(item => item.id === library.defaultId);
   const dock = cornerDockState();
   return { settings, settingsRevision, snapshot, resetForecast: resetForecastSource?.snapshot() || { status: 'connecting', source: 'https://codex-reset.com/' }, demo: demoMode, version: app.getVersion(), characters, followSupported, followError: t(followError), windowContainment: windowModeState(), cornerDock: dock, visualPose: visualPoseState(dock),
-    activeCharacterId: active.id, characterUrl: active.url, characterName: i18n.characterName(active), accountManagement: accountManagement() };
+    activeCharacterId: active.id, characterUrl: active.url, characterName: i18n.characterName(active),
+    ...(active.motions ? { characterMotion: { urls: active.motions, pose: activityPose } } : {}),
+    accountManagement: accountManagement() };
 }
 function broadcast() {
   for (const win of [widget, settingsWindow, chatWindow]) if (win && !win.isDestroyed()) win.webContents.send('state', state());
@@ -425,10 +431,28 @@ function characterMenuItems() {
 function selectCharacter(id) {
   const item = library.get(id);
   if (!item || !item.available) throw new Error(t('该形象不存在或图片已损坏，请重新导入。'));
+  if (settings.activeCharacterId !== item.id) activityPose = 'idle';
   settings.activeCharacterId = item.id;
   settings.characterPath = '';
   save(); updateTray(); broadcast();
+  if (item.motions) void pollCharacterActivity();
   return state();
+}
+async function pollCharacterActivity() {
+  if (demoMode || quitting || activityPending || !library.get(settings.activeCharacterId)?.motions) return;
+  activityPending = true;
+  try {
+    const { CodexActivityReader } = require('./codex-activity.cjs');
+    activityReader ??= new CodexActivityReader(() => source.local.listFiles());
+    const pose = await activityReader.read();
+    if (quitting || activityPose === pose || !library.get(settings.activeCharacterId)?.motions) return;
+    activityPose = pose;
+    broadcastWidgetState();
+  } catch {
+    // A temporary local read failure can be retried independently of quota.
+  } finally {
+    activityPending = false;
+  }
 }
 async function validateBrowserImage(file) {
   if (typeof file !== 'string' || !path.isAbsolute(file)) throw new Error(t('请选择本地图片。'));
@@ -462,7 +486,7 @@ async function importCharacterFiles(paths) {
   return result;
 }
 function show() { widgetManuallyHidden = false; if (windowMode) windowMode.show(); else { widget.show(); widget.moveTop(); } broadcast(); }
-function hide() { widgetManuallyHidden = true; if (windowMode) windowMode.hide(); else widget.hide(); broadcast(); }
+function hide() { cancelWidgetVoice(); widgetManuallyHidden = true; if (windowMode) windowMode.hide(); else widget.hide(); broadcast(); }
 function resetPosition() {
   cancelPose(true); drag = null;
   if (windowMode?.enabled) {
@@ -569,8 +593,11 @@ async function createWidget() {
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false } });
   widget = created;
   secureWindow(created);
+  created.on('hide', () => { if (widget === created) cancelWidgetVoice(); });
+  created.webContents.on('render-process-gone', () => { if (widget === created) voiceInput.cancel(); });
   created.on('close', event => { if (!quitting) { event.preventDefault(); hide(); } });
   created.on('closed', () => {
+    if (widget === created) voiceInput.cancel();
     if (quitting || widget !== created) return;
     cancelPose(true);
     // Windows destroys a native child when its host closes. Recreate only our
@@ -592,7 +619,21 @@ async function createWidget() {
 function secureWindow(win) {
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', event => event.preventDefault());
-  win.webContents.session.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+  win.webContents.session.setPermissionCheckHandler((contents, permission, _origin, details) =>
+    permission === 'media' && details?.mediaType === 'audio' && details.isMainFrame &&
+    isVoiceWindow(contents, details.requestingUrl) && voiceInput.permitsMicrophone());
+  win.webContents.session.setPermissionRequestHandler((contents, permission, callback, details) =>
+    callback(permission === 'media' && details?.isMainFrame && details.mediaTypes?.length === 1 &&
+      details.mediaTypes[0] === 'audio' && isVoiceWindow(contents, details.requestingUrl) && voiceInput.permitsMicrophone()));
+}
+function isVoiceWindow(contents, url) {
+  if (!widget || widget.isDestroyed() || contents !== widget.webContents || !settings.chatPageEnabled) return false;
+  const expected = pathToFileURL(path.join(__dirname, 'index.html')).href;
+  return contents.getURL() === expected && (!url || url === expected);
+}
+function cancelWidgetVoice() {
+  voiceInput.cancel();
+  if (widget && !widget.isDestroyed()) widget.webContents.send('voice-input-cancelled');
 }
 function action(name) {
   switch (name) {
@@ -686,6 +727,19 @@ function setupIpc() {
     if (!event.senderFrame || event.senderFrame !== event.sender.mainFrame) throw new Error(t('无效窗口'));
     return callback(event, ...args);
   });
+  const voiceHandle = (name, callback) => handle(name, (event, ...args) => {
+    if (event.senderFrame !== event.sender.mainFrame || !isVoiceWindow(event.sender, event.senderFrame?.url)) {
+      throw new Error(t('无效窗口'));
+    }
+    return callback(...args);
+  });
+  // The renderer checks installation before a project or ChatGPT login is needed.
+  handle('voice-input-available', event => event.sender === widget?.webContents && voiceInput.available());
+  voiceHandle('voice-input-begin', () => voiceInput.begin());
+  voiceHandle('voice-input-started', id => voiceInput.microphoneStarted(id));
+  voiceHandle('voice-input-cancel', id => { if (typeof id === 'string') voiceInput.cancel(id); });
+  voiceHandle('voice-input-preview', (id, pcm) => voiceInput.preview(id, pcm));
+  voiceHandle('voice-input-transcribe', (id, pcm) => voiceInput.transcribe(id, pcm));
   chatHandle('chat-state', () => companionChat().getState());
   chatHandle('chat-open-manager', () => openChatManager());
   chatHandle('chat-choose-directory', async (_event, input = {}) => {
@@ -900,6 +954,10 @@ else {
     globalShortcut.register('Control+Alt+Q', () => action('bounce'));
     globalShortcut.register('Control+Alt+Shift+M', () => updateSettings({ clickThrough: !settings.clickThrough }));
     await startControl(); show(); schedule(); refresh(); accountAlarm?.start();
+    if (!demoMode) {
+      activityTimer = setInterval(pollCharacterActivity, 1200);
+      void pollCharacterActivity();
+    }
     resetForecastSource.setEnabled(!settings.bubbleHiddenPages?.includes('resetForecast'));
   }).catch(error => { dialog.showErrorBox(t('Codex 女仆启动失败'), t(error.message)); app.quit(); });
 }
@@ -928,8 +986,9 @@ app.on('before-quit', event => {
     return;
   }
   try { chatService?.close(); } catch { event.preventDefault(); return; }
+  voiceInput.cancel();
   cancelPose(true);
   accountAlarm?.close();
-  quitting = true; resetForecastSource?.close(); clearInterval(timer); clearTimeout(authRefreshTimer); windowMode?.close(); stopAuthWatch?.(); desktopMonitor?.stop(); globalShortcut.unregisterAll(); source?.close(); controlServer?.close();
+  quitting = true; resetForecastSource?.close(); clearInterval(timer); clearInterval(activityTimer); clearTimeout(authRefreshTimer); windowMode?.close(); stopAuthWatch?.(); desktopMonitor?.stop(); globalShortcut.unregisterAll(); source?.close(); controlServer?.close();
   if (ownsControl) try { fs.unlinkSync(path.join(dataDir, 'control.json')); } catch {}
 });
