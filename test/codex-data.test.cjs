@@ -336,6 +336,53 @@ test('copied logs deduplicate by their first session ID while child logs keep th
   assert.equal((await reader.read(now)).today.tokens, 190);
 });
 
+test('a reopened session combines disjoint rollouts without counting either copy twice', async t => {
+  const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'maid-resumed-usage-'));
+  t.after(() => fs.rm(temporary, { recursive: true, force: true }));
+  const sessions = path.join(temporary, 'sessions'), archive = path.join(temporary, 'archived_sessions');
+  await Promise.all([fs.mkdir(sessions), fs.mkdir(archive)]);
+  const metadata = JSON.stringify({ type: 'session_meta', payload: { id: 'reopened' } });
+  const old = [
+    metadata, event('task_started', { turn_id: 'yesterday' }, '2026-10-15T03:00:00Z'),
+    usage(5000, 5000, '2026-10-15T03:00:01Z'),
+    event('task_complete', { turn_id: 'yesterday' }, '2026-10-15T03:00:02Z'),
+    event('task_started', { turn_id: 'earlier' }, '2026-10-16T02:00:00Z'),
+    usage(5020, 20, '2026-10-16T02:00:01Z'),
+    event('task_complete', { turn_id: 'earlier' }, '2026-10-16T02:00:02Z'),
+  ].join('\n') + '\n';
+  const resumed = [
+    metadata, event('task_started', { turn_id: 'recent' }, '2026-10-16T04:00:00Z'),
+    // The resumed counter can be lower than the last number in the old file.
+    usage(4800, 30, '2026-10-16T04:00:01Z'), usage(4840, 40, '2026-10-16T04:00:02Z'),
+    event('task_complete', { turn_id: 'recent' }, '2026-10-16T04:00:03Z'),
+  ].join('\n') + '\n';
+  const active = path.join(sessions, 'resumed.jsonl');
+  await Promise.all([
+    fs.writeFile(path.join(sessions, 'earlier.jsonl'), old),
+    fs.writeFile(path.join(archive, 'earlier-copy.jsonl'), old),
+    fs.writeFile(active, resumed),
+    fs.writeFile(path.join(archive, 'resumed-copy.jsonl'), resumed),
+  ]);
+  const readers = [LocalUsageReader, require('../macos/src/codex-data.cjs').LocalUsageReader]
+    .map(Reader => new Reader(temporary, options));
+  for (const reader of readers) {
+    const result = await reader.read(now);
+    assert.equal(result.today.tokens, 90);
+    assert.equal(result.today.turns, 2);
+    assert.equal(result.weekly.tokens, 5090);
+    assert.equal(result.weekly.turns, 3);
+    assert.equal(result.lastTurn.tokens, 70);
+    assert.equal(result.lastTurn.timestamp, '2026-10-16T04:00:03.000Z');
+  }
+  await fs.appendFile(active, usage(4870, 30, '2026-10-16T05:00:00Z') + '\n');
+  for (const reader of readers) {
+    const updated = await reader.read(now);
+    assert.equal(updated.today.tokens, 120);
+    assert.equal(updated.today.turns, 2);
+    assert.equal(updated.weekly.tokens, 5120);
+  }
+});
+
 test('weekly boundaries use Monday in the device timezone, including month changes and DST', () => {
   const midnight = new Date('2026-10-18T16:00:00Z');
   assert.deepEqual(weekRange(midnight, 'Asia/Shanghai'), { startDate: '2026-10-19', endDate: '2026-10-19' });

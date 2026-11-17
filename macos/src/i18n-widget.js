@@ -62,6 +62,8 @@
     '本机最近一轮 · 非金额账单':'Latest local turn · token count only', '最近一轮消耗 {tokens} tokens':'Latest turn used {tokens} tokens',
     '台词页已隐藏，可在设置中开启':'The phrases page is hidden. Enable it in settings.',
     '重置预测':'Reset forecast', '24 小时内':'Within 24h', '48 小时内':'Within 48h',
+    '全局重置或新增可兑换重置':'Global reset or new banked reset',
+    '来源旧版重置预测':'Legacy forecast from the source', '上次全局重置：{time}':'Last global reset: {time}',
     'Tibo 有重置信号':'Tibo reset signal', '暂无新信号':'No new signal', '信号待联网核实':'Signal needs an online check',
     '公告窗口：{time}':'Alert window: {time}', '信号不代表额度已重置':'A signal does not confirm a quota reset',
     '上次确认：{time}':'Last confirmed: {time}', '置信度：{level}':'Confidence: {level}', '低':'Low', '中':'Med', '高':'High', '未知':'Unknown',

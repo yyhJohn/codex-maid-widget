@@ -405,6 +405,22 @@ class ReadOnlyAppServer {
   close() { this.closed = true; this.disconnect(); }
 }
 
+function distinctRolloutSegments(states) {
+  if (states.length === 1) return states;
+  const ranked = states.map(state => ({
+    state, tokens: [...state.days.values()].reduce((sum, day) => sum + BigInt(day.tokens ?? 0), 0n),
+  })).sort((a, b) => a.tokens === b.tokens ? 0 : a.tokens > b.tokens ? -1 : 1);
+  const selected = [];
+  for (const { state } of ranked) {
+    // Copies can overlap. A resumed session can also write a separate,
+    // nonoverlapping rollout with the same session ID and its own counter.
+    const overlaps = selected.some(other => state.firstEventAt === null || other.firstEventAt === null ||
+      (state.firstEventAt <= other.lastEventAt && other.firstEventAt <= state.lastEventAt));
+    if (!overlaps) selected.push(state);
+  }
+  return selected;
+}
+
 // Incremental reader: scans file metadata, but only reads changed logs. Content is
 // discarded immediately; cached records contain numeric counters, dates and opaque turn IDs.
 class LocalUsageReader {
@@ -451,7 +467,8 @@ class LocalUsageReader {
         // not an activity date: imported/archived logs can also retain an old mtime.
         if (state && state.offset === stat.size && state.mtimeMs === stat.mtimeMs) return;
         if (!state || stat.size < state.offset || (state.offset === stat.size && stat.mtimeMs !== state.mtimeMs)) {
-          state = { offset: 0, carry: '', decoder: new StringDecoder('utf8'), previousTotal: null, days: new Map(), active: null, lastTurn: null, complete: true, sessionId: null, sawSessionMeta: false };
+          state = { offset: 0, carry: '', decoder: new StringDecoder('utf8'), previousTotal: null, days: new Map(),
+            firstEventAt: null, lastEventAt: null, active: null, lastTurn: null, complete: true, sessionId: null, sawSessionMeta: false };
           if (stat.size > this.maxTailBytes) {
             state.offset = stat.size - this.maxTailBytes;
             state.skipFirst = true;
@@ -495,13 +512,10 @@ class LocalUsageReader {
     const sessions = new Map();
     for (const [filename, state] of this.files) {
       const key = state.sessionId ? `session:${state.sessionId}` : `file:${filename}`;
-      const recordedTokens = [...state.days.values()].reduce((sum, day) => sum + BigInt(day.tokens ?? 0), 0n);
-      const previous = sessions.get(key);
-      // A copied rollout must not count twice. Prefer the version containing the
-      // greatest observed usage, rather than whichever copy was touched last.
-      if (!previous || recordedTokens > previous.recordedTokens) sessions.set(key, { state, recordedTokens });
+      if (!sessions.has(key)) sessions.set(key, []);
+      sessions.get(key).push(state);
     }
-    for (const { state } of sessions.values()) {
+    for (const state of [...sessions.values()].flatMap(distinctRolloutSegments)) {
       const day = state.days.get(today);
       if (day) { tokens = safeSum(tokens, day.tokens); turns = safeSum(turns, day.turns); observed = true; complete &&= state.complete; }
       for (const [key, activity] of state.days) {
@@ -562,8 +576,12 @@ class LocalUsageReader {
     try { event = JSON.parse(line); } catch { state.complete = false; return; }
     if (event.type !== 'event_msg' || !event.payload) return;
     const payload = event.payload;
+    if (!['task_started', 'task_complete', 'token_count'].includes(payload.type)) return;
     const timestamp = new Date(event.timestamp);
-    if (!Number.isFinite(timestamp.getTime())) return;
+    const time = timestamp.getTime();
+    if (!Number.isFinite(time)) return;
+    state.firstEventAt = Math.min(state.firstEventAt ?? time, time);
+    state.lastEventAt = Math.max(state.lastEventAt ?? time, time);
     const dayKey = dateKey(timestamp, this.timeZone);
     let day = state.days.get(dayKey);
     if (!day) { day = { tokens: 0, turns: 0 }; state.days.set(dayKey, day); }
@@ -580,7 +598,6 @@ class LocalUsageReader {
       }
       return;
     }
-    if (payload.type !== 'token_count') return;
     const total = tokenNumber(payload.info?.total_token_usage?.total_tokens);
     if (total === null) return;
     // token_count repeats the cumulative total on rate-limit updates. Count each delta once.

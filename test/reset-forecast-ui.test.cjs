@@ -42,19 +42,21 @@ function harness(folder) {
 for (const folder of ['', 'macos']) {
   const platform = folder || 'Windows';
   test(`${platform}: forecast labels distinguish prediction, signal and confirmed history in both languages`, () => {
-    const h = harness(folder);h.renderResetForecast();
+    const h = harness(folder);const data = {...forecast,outlookScope:'global_or_new_banked'};h.renderResetForecast(data);
     assert.equal(h.$('reset-probability-24').textContent,'37%');assert.equal(h.$('reset-probability-48').textContent,'63%');
     assert.equal(h.$('reset-signal').textContent,'Tibo 承诺重置');
     assert.ok(h.$('reset-signal').title.includes('<img src=x onerror=alert(1)>'),'source text is plain title text');
     assert.match(h.$('reset-signal').title,/不代表额度已重置/);
-    assert.match(h.$('reset-last-confirmed').textContent,/上次重置/);
+    assert.match(h.$('reset-last-confirmed').textContent,/上次全局重置/);
+    assert.equal(h.$('reset-probability-24').title,'全局重置或新增可兑换重置');
     assert.equal(h.$('reset-confidence').textContent,'置信度：中');
     assert.match(h.$('bubble').title,/第三方预测 · 非到账保证/);
-    h.language('en');h.renderResetForecast();
+    h.language('en');h.renderResetForecast(data);
     for(const node of h.nodes.values())assert.doesNotMatch(node.textContent,/[\u3400-\u9fff]/);
     assert.equal(h.$('reset-signal').textContent,'Tibo promises a reset');
     assert.equal(h.$('reset-confidence').textContent,'Confidence: Med');
-    assert.match(h.$('reset-last-confirmed').textContent,/Last reset/);
+    assert.match(h.$('reset-last-confirmed').textContent,/Last global reset/);
+    assert.equal(h.$('reset-probability-48').title,'Global reset or new banked reset');
     assert.match(h.$('bubble').title,/Third-party forecast · no guarantee/);
   });
   test(`${platform}: public promise gets primary countdown, pending time and confirmation-safe expiration`, () => {
@@ -98,7 +100,7 @@ for (const folder of ['', 'macos']) {
     assert.match(h.$('reset-signal').title,/公告窗口/);
     h.renderResetForecast({status:'offline',probability24h:NaN,probability48h:101,lastResetAt:'bad'});
     assert.equal(h.$('reset-probability-24').textContent,'--');assert.equal(h.$('reset-probability-48').textContent,'--');
-    assert.equal(h.$('reset-last-confirmed').textContent,'上次重置：--');
+    assert.equal(h.$('reset-last-confirmed').textContent,'上次全局重置：--');
     assert.equal(h.$('reset-confidence').textContent,'置信度：未知');
     assert.doesNotMatch(h.source,/reset[^\n]*\.innerHTML\s*=/i);
   });

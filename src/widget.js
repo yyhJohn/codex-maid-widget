@@ -200,13 +200,17 @@ function renderResetForecast(value = current?.resetForecast) {
   const probability = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100 ? `${Math.round(value)}%` : '--';
   $('reset-probability-24').textContent = probability(data.probability24h);
   $('reset-probability-48').textContent = probability(data.probability48h);
+  const scope = data.outlookScope === 'global_or_new_banked' ? t('全局重置或新增可兑换重置')
+    : data.outlookScope === 'legacy' ? t('来源旧版重置预测') : '';
+  $('reset-probability-24').title = scope;
+  $('reset-probability-48').title = scope;
   const signal = resetForecastSignal(data);
   $('reset-signal').textContent = t(signal ? !live ? '缓存信号 · 待核实' : signal.pending === 'done' ? 'Tibo 表示已重置' : signal.state === 'expired' ? signal.deadlineKind === 'observation' ? '观察窗口已过' : '承诺窗口已过' : signal.pending === 'on_its_way' ? '重置正在路上' : signal.kind === 'promise' ? 'Tibo 承诺重置' : 'Tibo 有重置信号' : live ? '暂无新信号' : '信号待联网核实');
   $('reset-signal').title = signal ? [typeof signal.summary === 'string' ? signal.summary.slice(0, 500) : '', signal.deadlineAt ? t(signal.deadlineKind === 'observation' ? '观察窗口：{time}' : '公告窗口：{time}', {time:resetForecastTime(signal.deadlineAt)}) : '', t('信号不代表额度已重置')].filter(Boolean).join('\n') : '';
   $('reset-announcement').hidden = !signal;
   $('resetForecast-view').classList.toggle('forecast-announcement', !!signal);
   updateResetForecastDeadline(data);
-  $('reset-last-confirmed').textContent = t('上次重置：{time}', {time:resetForecastTime(data.lastResetAt)});
+  $('reset-last-confirmed').textContent = t('上次全局重置：{time}', {time:resetForecastTime(data.lastResetAt)});
   $('reset-confidence').textContent = t('置信度：{level}', {level:t(({low:'低',medium:'中',high:'高'})[data.confidence] || '未知')});
   const time = resetForecastTime(data.updatedAt || data.fetchedAt);
   $('reset-forecast-status').textContent = resetForecastPending ? t('正在刷新…') : t(({live:'{time} 更新',demo:'演示预测 · {time}',stale:'缓存 {time} · 请核实',offline:'离线 · 点击重试',disabled:'预测暂不可用',connecting:'正在连接预测服务…'})[data.status] || '离线 · 点击重试', {time});

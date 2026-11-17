@@ -72,6 +72,49 @@ async function start(env) { env.client.setEnabled(true); await env.client.refres
 const plain = value => JSON.parse(JSON.stringify(value));
 
 for (const variant of ['..', '../macos']) {
+  test(`${variant}: uses the home page combined estimate and preserves its scope in the public cache`, async () => {
+    const file = path.join(os.tmpdir(), 'combined-forecast-test.json');
+    const cache = memoryIo();
+    const data = fixture({
+      probabilities: { rounded_24h: 16, rounded_48h: 29 },
+      reset_outlook: { scope: 'global_or_new_banked', updated_at: stamp(-5000), confidence: 'medium',
+        probabilities: { rounded_24h: 19, rounded_48h: 35 }, unused: 'fixture-private-field' },
+    });
+    const env = harness(variant, { fetch: async () => response(data), file, io: cache.io });
+    const live = await start(env);
+    assert.equal(live.outlookScope, 'global_or_new_banked');
+    assert.deepEqual([live.probability24h, live.probability48h, live.confidence, live.updatedAt], [19, 35, 'medium', stamp(-5000)]);
+    assert.equal(live.lastResetAt, data.last_reset_at);
+    assert.doesNotMatch(cache.files.get(file), /fixture-private-field/);
+    env.client.close();
+
+    const restored = harness(variant, { fetch: async () => response(null, { status: 503 }), file, io: cache.io });
+    const stale = await start(restored);
+    assert.equal(stale.status, 'stale');
+    assert.equal(stale.outlookScope, live.outlookScope);
+    assert.deepEqual([stale.probability24h, stale.probability48h, stale.confidence], [19, 35, 'medium']);
+    restored.client.close();
+  });
+
+  test(`${variant}: an unrecognized or malformed combined estimate uses the complete legacy pair`, () => {
+    const env = harness(variant);
+    const valid = { scope: 'global_or_new_banked', updated_at: stamp(0), probabilities: { rounded_24h: 19, rounded_48h: 35 } };
+    for (const changes of [
+      { scope: 'different_scope' }, { updated_at: stamp(6 * 60000) },
+      { probabilities: { rounded_24h: 19 } }, { probabilities: { rounded_24h: 35, rounded_48h: 19 } },
+    ]) {
+      const fallback = env.normalizeForecast(fixture({ reset_outlook: { ...valid, ...changes } }), EPOCH);
+      assert.equal(fallback.outlookScope, 'legacy');
+      assert.deepEqual([fallback.probability24h, fallback.probability48h, fallback.confidence], [22, 39, 'low']);
+    }
+    const zeroPair = env.normalizeForecast(fixture({ reset_outlook: {
+      ...valid, probabilities: { rounded_24h: 0, rounded_48h: 0 }, confidence: 'unknown',
+    } }), EPOCH);
+    assert.equal(zeroPair.outlookScope, 'global_or_new_banked');
+    assert.deepEqual([zeroPair.probability24h, zeroPair.probability48h, zeroPair.confidence], [0, 0, null]);
+    env.client.close();
+  });
+
   test(`${variant}: documented probabilities preserve zero and reject invalid/unknown payloads`, () => {
     const env = harness(variant);
     assert.equal(env.normalizeForecast(fixture({ probabilities: { rounded_24h: 0, rounded_48h: 0 } }), EPOCH).probability24h, 0);

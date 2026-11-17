@@ -7,14 +7,20 @@ const ENDPOINT = SOURCE + 'api/forecast';
 const INTERVAL = 120000;
 const MAX_BYTES = 65536;
 const MAX_AGE = 15 * 60000;
+const COMBINED_SCOPE = 'global_or_new_banked';
 const empty = () => ({ source: SOURCE, probability24h: null, probability48h: null, confidence: null,
-  lastResetAt: null, updatedAt: null, fetchedAt: null, signal: null });
+  outlookScope: null, lastResetAt: null, updatedAt: null, fetchedAt: null, signal: null });
 function timestamp(value) {
   if (typeof value !== 'string' || value.length > 64 || !/^\d{4}-\d\d-\d\dT/.test(value)) return null;
   const time = Date.parse(value);
   return Number.isFinite(time) ? new Date(time).toISOString() : null;
 }
 function probability(value) { return Number.isInteger(value) && value >= 0 && value <= 100 ? value : null; }
+function probabilityPair(value) {
+  const probability24h = probability(value?.rounded_24h), probability48h = probability(value?.rounded_48h);
+  return probability24h !== null && probability48h !== null && probability48h >= probability24h
+    ? { probability24h, probability48h } : null;
+}
 function sourceUrl(value) {
   try {
     const url = new URL(value);
@@ -34,20 +40,25 @@ function observationDetails(value, id, at) {
   } catch { return null; }
 }
 function normalizeForecast(value, now = Date.now()) {
-  const updatedAt = timestamp(value?.updated_at);
-  let p24 = probability(value?.probabilities?.rounded_24h), p48 = probability(value?.probabilities?.rounded_48h);
-  if (!updatedAt || Date.parse(updatedAt) > now + 5 * 60000) throw new Error('Invalid forecast');
-  const probabilitiesValid = p24 !== null && p48 !== null && p48 >= p24;
-  if (!probabilitiesValid) p24 = p48 = null;
+  const publishedAt = timestamp(value?.updated_at);
+  const latestAllowed = now + 5 * 60000;
+  if (!publishedAt || Date.parse(publishedAt) > latestAllowed) throw new Error('Invalid forecast');
+  // The website's main card uses the combined global/new banked model.
+  const outlook = value.reset_outlook;
+  const outlookAt = timestamp(outlook?.updated_at);
+  const combined = outlook?.scope === COMBINED_SCOPE && outlookAt && Date.parse(outlookAt) <= latestAllowed
+    ? probabilityPair(outlook.probabilities) : null;
+  const probabilities = combined || probabilityPair(value.probabilities);
+  const confidence = combined ? outlook.confidence : value.confidence;
   const last = timestamp(value.last_reset_at);
-  const lastResetAt = last && Date.parse(last) <= now + 5 * 60000 ? last : null;
+  const lastResetAt = last && Date.parse(last) <= latestAllowed ? last : null;
   const alert = value.latest_alert, at = timestamp(alert?.source_at);
   const end = timestamp(alert?.window?.end_at), target = timestamp(alert?.window?.target_at);
   const deadline = target || end;
   const active = alert?.kind === 'watch' && ['active', 'expired'].includes(alert.state) && at && Date.parse(at) <= now + 60000
     && now - Date.parse(at) <= 48 * 3600000 && (!lastResetAt || Date.parse(at) > Date.parse(lastResetAt))
     && (!deadline || Date.parse(deadline) >= Date.parse(at));
-  if (!probabilitiesValid && !active) throw new Error('Invalid forecast');
+  if (!probabilities && !active) throw new Error('Invalid forecast');
   const id = typeof alert?.id === 'string' && /^[A-Za-z0-9:_-]{1,100}$/.test(alert.id) ? alert.id : null;
   const pending = ['done', 'on_its_way'].includes(alert?.pending) ? alert.pending : null;
   // The canonical Alert score wins. The site's optional promise-score extension
@@ -59,9 +70,10 @@ function normalizeForecast(value, now = Date.now()) {
   const signal = active ? { id, at, state: alert.state, pending, score, kind: pending ? 'pending' : score === 93 ? 'promise' : 'watch', url: sourceUrl(alert.url),
     summary: typeof alert.summary === 'string' ? alert.summary.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 280) : '',
     deadlineAt: deadline, deadlineKind: deadline ? 'announcement' : null, deadlineQuote: null, deadlineSource: null } : null;
-  return { ...empty(), probability24h: p24, probability48h: p48,
-    confidence: ['low', 'medium', 'high'].includes(value.confidence) ? value.confidence : null,
-    lastResetAt, updatedAt, signal };
+  return { ...empty(), ...probabilities,
+    outlookScope: combined ? COMBINED_SCOPE : probabilities ? 'legacy' : null,
+    confidence: ['low', 'medium', 'high'].includes(confidence) ? confidence : null,
+    lastResetAt, updatedAt: combined ? outlookAt : publishedAt, signal };
 }
 function retryDelay(value, now) {
   if (typeof value !== 'string' || !value.trim()) return INTERVAL;
@@ -171,8 +183,10 @@ class ResetForecast {
         if (this.file) try {
           // The cache contains public, bounded fields only. No account, quota,
           // local paths, credentials or arbitrary API extension fields persist.
-          const cacheData = { updated_at: value.updatedAt, probabilities: { rounded_24h: value.probability24h, rounded_48h: value.probability48h },
-            confidence: value.confidence, last_reset_at: value.lastResetAt, latest_alert: value.signal ? { kind: 'watch',
+          const estimate = { probabilities: { rounded_24h: value.probability24h, rounded_48h: value.probability48h }, confidence: value.confidence };
+          const forecast = value.outlookScope === COMBINED_SCOPE
+            ? { reset_outlook: { scope: COMBINED_SCOPE, updated_at: value.updatedAt, ...estimate } } : estimate;
+          const cacheData = { updated_at: value.updatedAt, ...forecast, last_reset_at: value.lastResetAt, latest_alert: value.signal ? { kind: 'watch',
               id: value.signal.id, state: value.signal.state, score: value.signal.score, pending: value.signal.pending,
               source_at: value.signal.at, summary: value.signal.summary, url: value.signal.url,
               window: value.signal.deadlineKind === 'announcement' && value.signal.deadlineAt ? { end_at: value.signal.deadlineAt } : null } : null };
