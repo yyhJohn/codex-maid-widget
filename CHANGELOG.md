@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.17 — Optional White Dragon animations for Windows
+
+- Add optional White Dragon animations for idle, Codex work, completion and clicks. The Windows installer includes a helper that verifies the original author's download and converts the four clips locally.
+- Keep offline Mandarin dictation with an included CPU engine, live preview and an editable final draft. The model installer reuses previously verified model files.
+
+- 新增可选的动态 GPT 白龙娘，支持待机、Codex 工作、任务完成和点击。Windows 安装包提供素材工具，从原作者的发布页下载、校验并在本机转换四段动画。
+- 保留离线中文语音输入、CPU 识别引擎、实时预览和可编辑草稿。语音模型工具会复用已校验的本机模型。
+
 ## 0.5.16 — Animated GPT Girl and offline Mandarin input for Windows
 
 - Add GPT Girl with idle, working, completion and click-to-wave animations. Work and completion use local Codex turn events.
