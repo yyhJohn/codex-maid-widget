@@ -65,7 +65,7 @@ function state() {
   const dock = cornerDockState();
   return { settings, settingsRevision, snapshot, resetForecast: resetForecastSource?.snapshot() || { status: 'connecting', source: 'https://codex-reset.com/' }, demo: demoMode, version: app.getVersion(), characters, followSupported, followError: t(followError), windowContainment: windowModeState(), cornerDock: dock, visualPose: visualPoseState(dock),
     activeCharacterId: active.id, characterUrl: active.url, characterName: i18n.characterName(active),
-    ...(active.motions ? { characterMotion: { urls: active.motions, pose: activityPose } } : {}),
+    ...(active.motions ? { characterMotion: { urls: active.motions, pose: activityPose, timings: active.motionTimings } } : {}),
     accountManagement: accountManagement() };
 }
 function broadcast() {
@@ -439,13 +439,15 @@ function selectCharacter(id) {
   return state();
 }
 async function pollCharacterActivity() {
-  if (demoMode || quitting || activityPending || !library.get(settings.activeCharacterId)?.motions) return;
+  if (demoMode || quitting || activityPending) return;
+  const selected = library.get(settings.activeCharacterId);
+  if (!selected?.available || !selected.motions) return;
   activityPending = true;
   try {
     const { CodexActivityReader } = require('./codex-activity.cjs');
     activityReader ??= new CodexActivityReader(() => source.local.listFiles());
     const pose = await activityReader.read();
-    if (quitting || activityPose === pose || !library.get(settings.activeCharacterId)?.motions) return;
+    if (quitting || activityPose === pose || settings.activeCharacterId !== selected.id) return;
     activityPose = pose;
     broadcastWidgetState();
   } catch {

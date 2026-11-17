@@ -130,6 +130,28 @@ Settings, imported character images, and local integration files live in `~/.cod
 
 Please remove account details, credentials, personal paths, and conversation content before posting an issue or screenshot. To report a security issue, see [SECURITY.md](SECURITY.md).
 
+## Optional GPT White Dragon on Windows
+
+Open the widget once to initialize its profile. With an installer built from this
+revision, choose **Install White Dragon animations** in the Codex Maid Widget
+Start menu folder. To install the animations for a
+source or portable build from this revision, run the helper from the repository:
+
+~~~powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\distribution\windows\install-bailong.ps1
+~~~
+
+The helper downloads and verifies the [author's v0.5.1 ZIP](https://github.com/jingh12312-rgb/bailong-desktop-pet/releases/tag/v0.5.1)
+(226 MiB). To use an existing copy, pass `-Archive` with its path. If the widget
+uses a custom data directory, pass `-DataDir` with that path or set
+`CODEX_MAID_HOME`. The four animation files are stored locally under
+`characters/bailong` in the widget's profile, so app reinstalls can reuse them.
+After installation, restart the widget and choose **GPT White Dragon · Animated**.
+She blinks at idle, uses her laptop while Codex works, celebrates on completion
+and waves when clicked.
+
+Artwork credit: 風-隐 / jingh12312-rgb. See the [author's artwork terms](https://github.com/jingh12312-rgb/bailong-desktop-pet/blob/main/ASSETS.md).
+
 ## Build from source
 
 You'll need Node.js **22.12 or newer** and a development environment for the platform you're building. The lockfiles pin dependency versions.

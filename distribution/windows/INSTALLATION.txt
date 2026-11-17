@@ -16,6 +16,12 @@ yourself. The speech engine runs on this computer.
 
 Select "GPT Girl · Animated" in Settings > Characters to use the dragon girl.
 
+To add GPT White Dragon (Animated), open the widget once, then choose "Install
+White Dragon animations" in the Start menu folder. The helper verifies the author's
+226 MiB v0.5.1 archive and converts its four clips locally. Restart the widget
+and choose the new character in Settings > Characters. These files are kept
+under characters\bailong in the widget's user profile across app reinstalls.
+
 To enable maid tools inside Codex, select "Connect Codex plugin" at the end of
 installation, or use "Connect Codex plugin" in the Start menu. Codex itself must
 already be installed. The connection wizard can locate Codex or ask you to choose

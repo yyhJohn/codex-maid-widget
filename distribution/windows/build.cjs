@@ -51,7 +51,7 @@ async function build({ withVoice = false } = {}) {
   stageIntegration({ root, platform: 'win32', destination: path.join(stage, 'resources/integration') });
   const helper = path.join(stage, 'resources/installer');
   fs.mkdirSync(helper, { recursive: true });
-  for (const file of ['lifecycle.ps1', 'INSTALLATION.txt']) fs.copyFileSync(path.join(__dirname, file), path.join(helper, file));
+  for (const file of ['lifecycle.ps1', 'INSTALLATION.txt', 'install-bailong.ps1']) fs.copyFileSync(path.join(__dirname, file), path.join(helper, file));
   for (const file of ['LICENSE', 'NOTICE', 'ARTWORK_LICENSE.md']) fs.copyFileSync(path.join(root, file), path.join(helper, file));
   fs.cpSync(path.join(root, 'licenses'), path.join(helper, 'licenses'), { recursive: true });
   fs.copyFileSync(path.join(root, 'assets/app-icon.ico'), path.join(helper, 'app-icon.ico'));

@@ -11,6 +11,8 @@ const runtimeFiles = new Set(['package.json', 'LICENSE', 'NOTICE', 'ARTWORK_LICE
 function isRuntimePath(file) {
   const relative = String(file).replaceAll('\\', '/').replace(/^\/+/, '');
   if (!relative) return true;
+  // The author's White Dragon artwork is installed in the user profile.
+  if (relative === 'assets/characters/bailong' || relative.startsWith('assets/characters/bailong/')) return false;
   const parts = relative.split('/');
   if (parts.some(part => !part || part === '.' || part === '..')) return false;
   return runtimeDirectories.has(parts[0]) || (parts.length === 1 && runtimeFiles.has(parts[0]));

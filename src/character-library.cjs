@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { pathToFileURL } = require('node:url');
+const { fileURLToPath, pathToFileURL } = require('node:url');
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const MAX_MANIFEST_BYTES = 2 * 1024 * 1024;
@@ -22,6 +22,16 @@ const BUILT_INS = Object.freeze([
       completed: 'characters/gpt-girl/review.webp',
       wave: 'characters/gpt-girl/jumping.webp',
     },
+  },
+  {
+    id: 'bailong', name: 'GPT 白龙娘（动态）', file: 'characters/bailong/idle.webp',
+    motions: {
+      working: 'characters/bailong/working.webp',
+      completed: 'characters/bailong/completed.webp',
+      wave: 'characters/bailong/wave.webp',
+    },
+    motionTimings: { wave: 4000, completed: 4000 },
+    optional: true,
   },
 ]);
 
@@ -167,8 +177,8 @@ class CharacterLibrary {
     }
   }
 
-  _pathFor(record, builtIn) {
-    return builtIn ? path.join(this.assetRoot, record.file) : this._storedPath(record.file);
+  _pathFor(record, builtIn, root = this.assetRoot) {
+    return builtIn ? path.join(root, record.file) : this._storedPath(record.file);
   }
 
   _available(file, builtIn = false) {
@@ -178,24 +188,45 @@ class CharacterLibrary {
     } catch { return false; }
   }
 
+  _assetRootFor(record) {
+    if (!record.optional) return this.assetRoot;
+    const directory = path.dirname(path.join(this.dataDir, record.file));
+    try {
+      const stat = fs.lstatSync(directory);
+      if (!stat.isDirectory() || stat.isSymbolicLink() ||
+          fs.realpathSync(directory) !== path.join(this.realDirectory, path.basename(directory))) return this.assetRoot;
+      const files = [record.file, ...Object.values(record.motions)];
+      if (files.every(file => this._available(path.join(this.dataDir, file)))) return this.dataDir;
+    } catch { /* An absent or incomplete pack is optional. */ }
+    return this.assetRoot;
+  }
+
   _entry(record, builtIn) {
-    const file = this._pathFor(record, builtIn);
-    const motions = record.motions && Object.fromEntries(
-      Object.entries(record.motions).map(([pose, name]) => [pose, pathToFileURL(this._pathFor({ file: name }, true)).href]),
+    const root = builtIn ? this._assetRootFor(record) : this.assetRoot;
+    const file = this._pathFor(record, builtIn, root);
+    const motionPaths = Object.entries(record.motions || {}).map(
+      ([pose, name]) => [pose, this._pathFor({ file: name }, true, root)],
     );
+    const available = this._available(file, builtIn) &&
+      (!record.optional || motionPaths.every(([, target]) => this._available(target, true)));
     return {
       id: record.id,
       name: builtIn ? this.nameOverrides[record.id] || record.name : record.name,
       nameCustomized: builtIn && Object.hasOwn(this.nameOverrides, record.id),
       url: pathToFileURL(file).href,
       builtIn,
-      available: this._available(file, builtIn),
-      ...(motions ? { motions } : {}),
+      available,
+      ...(record.motions ? { motions: Object.fromEntries(motionPaths.map(([pose, target]) => [pose, pathToFileURL(target).href])) } : {}),
+      ...(record.motionTimings ? { motionTimings: record.motionTimings } : {}),
     };
   }
 
   list() {
-    return [...BUILT_INS.map(record => this._entry(record, true)), ...this.characters.map(record => this._entry(record, false))];
+    const builtIns = BUILT_INS.flatMap(record => {
+      const entry = this._entry(record, true);
+      return record.optional && !entry.available ? [] : [entry];
+    });
+    return [...builtIns, ...this.characters.map(record => this._entry(record, false))];
   }
 
   get(id) {
@@ -207,8 +238,8 @@ class CharacterLibrary {
 
   _findHash(hash) {
     for (const record of BUILT_INS) {
-      const file = this._pathFor(record, true);
-      if (this._available(file, true) && sha256(fs.readFileSync(file)) === hash) return this._entry(record, true);
+      const entry = this._entry(record, true);
+      if (entry.available && sha256(fs.readFileSync(fileURLToPath(entry.url))) === hash) return entry;
     }
     for (const record of this.characters) {
       if (record.sha256 === hash && this._available(this._pathFor(record, false))) return this._entry(record, false);

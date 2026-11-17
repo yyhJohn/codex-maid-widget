@@ -5,22 +5,44 @@ const locale = () => i18n?.getLocale() || 'zh-CN';
 const $ = id => document.getElementById(id);
 const mirrorFlip = window.MaidMirrorFlip?.create({ image: $('maid-image') });
 let current, mode = 'quota', hideTimer, noticeTimer, phraseIndex = -1, lastTurnTimestamp, initializedTurn = false;
-let characterWaveTimer;
+let characterWaveTimer, characterCompletionTimer, characterCompletionQueued = false;
+function clearCharacterCompletion() {
+  clearTimeout(characterCompletionTimer);
+  characterCompletionTimer = undefined;
+  characterCompletionQueued = false;
+}
 function renderCharacterImage(replayWave = false) {
   const image = $('maid-image'), motion = current.characterMotion;
-  const pose = characterWaveTimer ? 'wave' : motion?.pose;
+  let pose = motion?.pose;
+  if (characterWaveTimer) pose = 'wave';
+  else if (motion?.timings?.completed) {
+    if (characterCompletionQueued && !characterCompletionTimer) {
+      characterCompletionQueued = false;
+      characterCompletionTimer = setTimeout(() => {
+        characterCompletionTimer = undefined;
+        renderCharacterImage();
+      }, motion.timings.completed);
+    }
+    if (characterCompletionTimer) pose = 'completed';
+    else if (pose === 'completed') pose = 'idle';
+  }
   const url = motion?.urls[pose] || current.characterUrl;
   if (motion) image.dataset.motion = pose;
   else delete image.dataset.motion;
   if (image.src !== url || replayWave) image.src = url;
 }
 function waveCharacter() {
-  if (!current?.characterMotion?.urls.wave) return;
+  const motion = current?.characterMotion;
+  if (!motion?.urls.wave) return;
+  if (characterCompletionTimer) {
+    clearCharacterCompletion();
+    characterCompletionQueued = true;
+  }
   clearTimeout(characterWaveTimer);
   characterWaveTimer = setTimeout(() => {
     characterWaveTimer = undefined;
     renderCharacterImage();
-  }, 840);
+  }, motion.timings?.wave ?? 840);
   renderCharacterImage(true);
 }
 let displayed = null, animationId;
@@ -722,6 +744,7 @@ function render(value) {
   if (olderSettings && current) value = { ...value, settings: current.settings };
   if (revision !== null) lastSettingsRevision = Math.max(lastSettingsRevision, revision);
   const characterChanged = initial || value.characterUrl !== current.characterUrl;
+  const previousActivityPose = current?.characterMotion?.pose;
   const bubbleChanged = initial || value.settings.showBubble !== current.settings.showBubble || value.settings.autoHideSeconds !== current.settings.autoHideSeconds;
   const phrasesChanged = initial || value.settings.phrases.length !== current.settings.phrases.length || value.settings.phrases.some((phrase, index) => phrase !== current.settings.phrases[index]);
   const modeChanged = initial || (!modeWritePending && !olderSettings && current.settings.mode !== value.settings.mode);
@@ -772,6 +795,10 @@ function render(value) {
     clearTimeout(characterWaveTimer);
     characterWaveTimer = undefined;
   }
+  const activityPose = value.characterMotion?.pose;
+  if (characterChanged || activityPose === 'working') clearCharacterCompletion();
+  if (value.characterMotion?.timings?.completed && activityPose === 'completed' &&
+      (characterChanged || previousActivityPose !== 'completed')) characterCompletionQueued = true;
   renderCharacterImage();
   $('maid-image').alt = value.characterName || t('桌面女仆形象');
   $('widget').classList.toggle('is-mirrored', value.settings.mirror);

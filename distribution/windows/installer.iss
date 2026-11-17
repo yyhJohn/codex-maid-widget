@@ -55,6 +55,7 @@ Name: "{group}\Codex Maid Widget"; Filename: "{app}\Codex-Maid-Widget.exe"; Work
 Name: "{group}\Connect Codex plugin"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\resources\integration\connect.vbs"""; WorkingDir: "{app}"; IconFilename: "{app}\Codex-Maid-Widget.exe"; Check: not IsTestMode
 Name: "{group}\Disconnect Codex plugin"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\resources\integration\connect.vbs"" --remove"; WorkingDir: "{app}"; IconFilename: "{app}\Codex-Maid-Widget.exe"; Check: not IsTestMode
 Name: "{group}\Installation help"; Filename: "{app}\resources\installer\INSTALLATION.txt"; Check: not IsTestMode
+Name: "{group}\Install White Dragon animations"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoLogo -NoProfile -ExecutionPolicy Bypass -NoExit -File ""{app}\resources\installer\install-bailong.ps1"""; WorkingDir: "{app}"; IconFilename: "{app}\Codex-Maid-Widget.exe"; Check: not IsTestMode
 #ifdef HasVoiceEngine
 Name: "{group}\Install offline voice models"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoLogo -NoProfile -ExecutionPolicy Bypass -NoExit -File ""{app}\resources\installer\install-voice-models.ps1"""; WorkingDir: "{app}"; IconFilename: "{app}\Codex-Maid-Widget.exe"; Check: not IsTestMode
 #endif

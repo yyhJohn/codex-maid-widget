@@ -109,6 +109,7 @@
     '小龙娘-托腮': 'Little Dragon · Daydream', '小龙娘-端庄': 'Little Dragon · Poise',
     '薄荷女仆': 'Mint Maid', '紫晶龙女仆': 'Amethyst Dragon Maid',
     'GPT 小龙娘（动态）': 'GPT Girl · Animated',
+    'GPT 白龙娘（动态）': 'GPT White Dragon · Animated',
     '无效的外观预览参数': 'Invalid appearance preview settings.', '无效的底角预览参数': 'Invalid corner preview settings.',
     '该形象不存在或图片已损坏，请重新导入。': 'This character is missing or its image is damaged. Please import it again.',
     '请选择本地图片。': 'Please choose a local image.', '请选择小于 15 MB 的图片。': 'Please choose an image smaller than 15 MB.',
