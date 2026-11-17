@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.18 — Corrected token totals and reset outlook
+
+- Count nonoverlapping continuations of the same Codex session in daily and weekly token totals. Overlapping copies are still deduplicated.
+- Use the same 24-hour and 48-hour forecast as the codex-reset.com homepage, and label the date of the last global reset.
+
+- 修复今日及本周 Token 漏算。合并同一会话中互不重叠的续写日志，并对重复副本去重。
+- 重置预测采用与来源首页相同的 24 小时和 48 小时口径，日期标明为上次全局重置。
+
 ## 0.5.17 — Optional White Dragon animations for Windows
 
 - Add optional White Dragon animations for idle, Codex work, completion and clicks. The Windows installer includes a helper that verifies the original author's download and converts the four clips locally.

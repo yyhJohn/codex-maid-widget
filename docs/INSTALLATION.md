@@ -17,7 +17,7 @@ Real quota requires the official Codex desktop app to be installed and signed in
 
 ## Windows fork release
 
-[Windows x64 v0.5.17 and SHA-256](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.17)
+[Windows x64 v0.5.18 and SHA-256](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.18)
 
 - Select **GPT Girl · Animated** under **Settings → Characters**. The dragon girl types while Codex is working, celebrates on completion, and waves when clicked.
 - To add **GPT White Dragon · Animated**, launch the widget once, then open **Install White Dragon animations** from the **Codex Maid Widget** Start menu folder. This helper verifies the [author's v0.5.1 download](https://github.com/jingh12312-rgb/bailong-desktop-pet/releases/tag/v0.5.1) and converts the four clips into the widget's local character directory. Restart the widget and select the character. For a custom profile, pass `-DataDir` to `resources/installer/install-bailong.ps1`.

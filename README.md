@@ -31,7 +31,7 @@ These screenshots show the 0.3.48 Windows interface with **synthetic demo data**
 
 Release notes and SHA-256 checksums are on the [Releases](https://github.com/Feeesack/codex-maid-widget/releases) page. The installers include the runtime and optional local Codex plugin, so you don't need to install Node.js or npm, or download the source.
 
-This fork's **Windows x64 v0.5.17** includes offline Mandarin dictation and an optional White Dragon animation installer. Get the [fork release and checksum](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.17) and follow the [voice and White Dragon setup instructions](docs/INSTALLATION.md#windows-fork-release). See the [changelog](CHANGELOG.md).
+This fork's **Windows x64 v0.5.18** includes offline Mandarin dictation and an optional White Dragon animation installer. Get the [fork release and checksum](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.18) and follow the [voice and White Dragon setup instructions](docs/INSTALLATION.md#windows-fork-release). See the [changelog](CHANGELOG.md).
 
 The [0.3.48 release notes](docs/releases/0.3.48.md) bring together the changes since 0.3.21: paired press/release interactions; five sound choices including DSH Duck; multi-account reset reminders; two new dragon-girl poses; conversation context, compaction and Git status; Motion mirroring; Hugeicons controls; page ordering and visibility; live appearance and corner-hiding previews; and Windows installation-path fixes. Sound sources and their separate license scopes are documented in [audio provenance](docs/interaction-audio.md).
 
