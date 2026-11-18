@@ -186,6 +186,12 @@ The worker shutdown lifecycle fix passes the focused service regression with the
 
 CI does not replace hands-on Mac acceptance for multiple monitors, Spaces, full screen, Retina, audio and login sessions. Subjective sound and animation feel, real five-hour reset reminders and Windows sign-out/sign-in also need hands-on acceptance.
 
+## Contributors
+
+- **yyhJohn** maintains this fork’s Windows releases. Contributions include offline Mandarin dictation, White Dragon animations, and fixes for daily token totals and reset forecasts. [GitHub profile](https://github.com/yyhJohn)
+
+[View all repository contributors](https://github.com/yyhJohn/codex-maid-widget/graphs/contributors)
+
 ## Acknowledgements and licenses
 
 - The original mint maid, lilac dragon maid and app icon artwork were generated with **GPTimage2.5**, as stated by the project author. These materials use [CC BY 4.0](licenses/CC-BY-4.0.txt); credit **Codex Maid Widget contributors** and link to this repository when reusing them. The user supplied the two 小龙娘 images and authorized their names and built-in use in this project; no additional copyright or reuse license is asserted for them. See [asset provenance](docs/asset-provenance.md) and [artwork scope](ARTWORK_LICENSE.md).

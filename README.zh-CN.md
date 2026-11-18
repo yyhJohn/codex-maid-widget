@@ -164,6 +164,12 @@ Worker 关闭生命周期修复后的真实语义后端定向服务回归已通�
 
 CI 不代替 Mac 多屏、Spaces、全屏、Retina、声音及登录会话的人工体验。主观音量、动画手感、真实五小时提醒和 Windows 注销重登也仍需人工验收。
 
+## 贡献者
+
+- **yyhJohn** 维护本 fork 的 Windows 版本，贡献包括离线中文语音输入、白龙娘动画接入、今日 Token 统计和重置预测修复。[GitHub 主页](https://github.com/yyhJohn)
+
+[查看仓库的全部贡献者](https://github.com/yyhJohn/codex-maid-widget/graphs/contributors)
+
 ## 致谢与许可
 
 - 据项目作者说明，原有薄荷女仆、淡紫龙女仆和应用图标由 **GPTimage2.5** 生成，这些素材采用 [CC BY 4.0](licenses/CC-BY-4.0.txt)，复用时请署名 **Codex Maid Widget contributors** 并链接本仓库。新增两张「小龙娘」图片由用户提供，已授权在本项目内置使用及命名；这里不声明额外独立版权或再许可。具体范围见[素材来源](docs/asset-provenance.md)和[图片许可](ARTWORK_LICENSE.md)。
