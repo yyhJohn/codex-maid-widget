@@ -2,11 +2,34 @@
 
 [English](README.md) | **简体中文**
 
-联系邮箱：[feeesack9449@gmail.com](mailto:feeesack9449@gmail.com)
+上游项目与原作者联系方式。[Feeesack/codex-maid-widget](https://github.com/Feeesack/codex-maid-widget) · [feeesack9449@gmail.com](mailto:feeesack9449@gmail.com)
 
-给 Codex 配一个桌面小伙伴，看看剩余额度和本机 token 用量。检测到一轮任务完成时，角色会“duang”地跳一下，提醒你放下手机，回来看看结果。
+这是一个 Codex 桌宠，可显示账号剩余额度和本机 Token 用量，任务完成时可用弹跳和短音提醒。本 fork 为 Windows 加入了动态龙娘和离线中文语音输入。
+
+[下载 Windows x64 版](https://github.com/yyhJohn/codex-maid-widget/releases/latest) · [安装方法](#下载与安装) · [更新记录](CHANGELOG.md)
 
 <img src="assets/icons/app-128.png" width="72" alt="Codex 女仆额度挂件应用图标">
+
+## 下载与安装
+
+| 平台 | 版本来源 | 下载与校验 |
+| --- | --- | --- |
+| Windows x64 | 本 fork 的 **v0.5.18** | [下载 .exe 安装包](https://github.com/yyhJohn/codex-maid-widget/releases/download/v0.5.18/Codex-Maid-Widget-0.5.18-windows-x64-setup.exe) · [SHA-256](https://github.com/yyhJohn/codex-maid-widget/releases/download/v0.5.18/Codex-Maid-Widget-0.5.18-windows-x64-setup.exe.sha256) |
+| macOS 13 及以上，Apple 芯片与 Intel | 上游 **v0.5.14** | [下载通用 .pkg 安装包](https://github.com/Feeesack/codex-maid-widget/releases/download/v0.5.14/Codex-Maid-Widget-0.5.14-macOS-universal.pkg) · [发布说明和 SHA-256](https://github.com/Feeesack/codex-maid-widget/releases/tag/v0.5.14) |
+
+1. 运行安装包。Windows 安装时可选安装路径，也可勾选**创建桌面快捷方式**。
+2. 从 Windows 开始菜单或 macOS「应用程序」中打开挂件。登录官方 Codex 桌面应用后，挂件可显示账号额度。
+3. 点齿轮或右键角色打开设置，在**界面语言**里切换 **简体中文 / English**。
+
+重装或覆盖升级 Windows 版时，沿用原来的桌宠数据目录即可复用设置、已安装的模型和下载好的动画。安装包内含运行环境和可选的本地 Codex 插件。上游 Mac 应用使用临时签名。系统提示确认安装包来源时，可核对发布页提供的 SHA-256。
+
+### Windows 版新增功能
+
+- **离线中文语音输入。** 先打开桌宠一次，再从开始菜单的 **Codex Maid Widget** 文件夹运行 **Install offline voice models**。首次安装会下载并校验约 3.3 GB 的模型。重启后，在桌宠聊天框点麦克风即可由本机 CPU 识别，并实时预览结果。录音结束后，文字会追加到草稿末尾，由你确认后发送。
+- **动态龙娘。** 在 **设置 → 形象库** 可选 **GPT 小龙娘（动态）**。要使用 **GPT 白龙娘（动态）**，先打开桌宠一次，再从同一个开始菜单文件夹运行 **Install White Dragon animations**，重启后到形象库切换。工具从原作者的发布页下载并校验素材，在本机转换。两款形象都有待机、Codex 工作、任务完成和点击招手四种动画。[白龙娘素材作者 風-隐 / jingh12312-rgb](https://github.com/jingh12312-rgb/bailong-desktop-pet/releases/tag/v0.5.1)
+- **Token 统计和重置预测。** v0.5.18 将同一会话中不重叠的续写日志计入今日及本周总量，并对重叠副本去重。24 小时和 48 小时预测与来源首页采用相同数据，日期标注为「上次全局重置」。[预测来源](https://codex-reset.com/) · [v0.5.18 发布说明](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.18)
+
+[语音模型与白龙娘素材安装细节](docs/INSTALLATION.md#windows-fork-release)
 
 ## 界面预览
 
@@ -20,44 +43,19 @@
 | --- | --- | --- |
 | [<img src="docs/screenshots/release-0.3.48-pages.png" width="270" alt="气泡页面顺序、显示与默认页设置">](docs/screenshots/release-0.3.48-pages.png) | [<img src="docs/screenshots/release-0.3.48-appearance.png" width="270" alt="底边与侧边藏入宽度滑块及音色选择">](docs/screenshots/release-0.3.48-appearance.png) | [<img src="docs/screenshots/release-0.3.48-characters.png" width="270" alt="形象库展示两种新小龙娘姿态与原有角色">](docs/screenshots/release-0.3.48-characters.png) |
 
-## 下载与安装
-
-**v0.5.14 已发布。** Windows x64 与 macOS 13+ 通用安装包均已提供；本次新增桌宠聊天与持久记忆、归档和用量管理、设置分类、聊天恢复，以及重置预测与公告提醒接入。
-
-| 平台 | 安装包 |
-| --- | --- |
-| Windows x64 | [Windows 安装包（.exe）](https://github.com/Feeesack/codex-maid-widget/releases/download/v0.5.14/Codex-Maid-Widget-0.5.14-windows-x64-setup.exe) |
-| macOS 13 及以上，Apple 芯片与 Intel | [Mac 通用安装包（.pkg）](https://github.com/Feeesack/codex-maid-widget/releases/download/v0.5.14/Codex-Maid-Widget-0.5.14-macOS-universal.pkg) |
-
-更新说明和 SHA-256 校验值放在 [Releases](https://github.com/Feeesack/codex-maid-widget/releases)。安装包已带上运行环境和可选的本地 Codex 插件，不用另装 Node.js、npm，也不用下载源码。
-
-本 fork 的 **Windows x64 v0.5.18** 提供可选的动态 GPT 白龙娘和离线中文语音输入。[下载安装包与校验值](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.18) · [白龙娘素材和语音模型安装方法](docs/INSTALLATION.md#windows-fork-release) · [更新记录](CHANGELOG.md)
-
-[0.3.48 发布说明](docs/releases/0.3.48.md)汇总了 0.3.21 以来的更新：按下／抬起两段互动，含「DSH 小黄鸭」的五套音色，多账号重置提醒，两种新小龙娘形象，对话上下文、压缩次数与 Git 状态，Motion 镜像动画，Hugeicons 图标，页面排序与显隐，外观及探头宽度实时预览，以及 Windows 安装路径修复。各音效来源与独立许可范围见[音频资料](docs/interaction-audio.md)。
-
-[0.5.14 发布说明](docs/releases/0.5.14.md)介绍本次更新，前置本地更新见[更新记录](CHANGELOG.md)。Windows 设置、导入形象和原始素材保留；macOS 通用安装包已在 Apple Silicon 与 Intel 环境完成安装启动验证。Spaces、全屏、多屏、Retina、声音和登录会话的人工体验仍需单独验收。
-
-1. 先安装官方 Codex 桌面应用并登录，挂件才有真实账号额度可读。
-2. 运行安装包，从 Windows 开始菜单或 macOS“应用程序”中打开挂件。
-3. 点击齿轮、右键角色，或使用系统托盘／菜单栏菜单调整设置。
-
-0.3.49 起可在设置顶部的 **界面语言** 中选择 **简体中文 / English**，立即生效并在下次启动时保留。默认保持中文；英文针对长单词和说明文字调整排版，自定义名称、台词及项目名称保留原文。
-
-目前的安装包没有开发者分发证书。Mac 应用使用 ad-hoc 签名，安装包尚未经过 Apple 公证，安装时系统可能会要求确认来源。请从本仓库的 Releases 下载，并核对附带的校验值。
-
 ## 能做什么
 
 - 查看额度剩余百分比和重置倒计时，选择不同额度桶，自动刷新或手动点一下刷新。
 - 查看今日、本周和本机最近完成一轮的 token 用量，不用另开统计页面。
 - 偶尔“duang”一下：检测到新完成一轮时，角色会弹跳并播放一声短音效；点击角色或使用快捷键也能触发。音效可以关闭，刷手机时听见了，记得回来看看。
 - 跟着 Codex 自启动：登录助手在后台等待，打开 Codex 时显示挂件，完全退出 Codex 后挂件也会退出。这个功能可以在设置中关闭。
-- 在四个内置角色之间切换，或把自己的图片导入本机形象库。台词可以自己写，气泡颜色会随角色匹配。
+- 在内置角色之间切换，或把自己的图片导入本机形象库。台词可以自己写，气泡颜色会随角色匹配。
 - 可选桌宠图文聊天：通过已登录的 Codex 账号发送，支持流式回答、中断、模型选择和专用聊天项目。聊天及模型维护会消耗账号额度，不需要另配 API key。
 - 持久保存人设、用户偏好与事实档案，支持带原图的检查点归档、离线历史检索及受控换聊。归档标题、标签、收藏和隐藏状态写入独立元数据，原始记录保留。
 - 聊天管理分为当前聊天、用量记录、归档历史、记忆档案、换聊与维护、做梦维护、项目与模型七页。聊天原生 token 账本与全设备日志用量分开，缺失计量保持未知。
 - 聊天气泡和展开书写卡片共用输入框，保留草稿、选区、输入法组合状态及发送期间的新输入。Enter 换行，Ctrl/Cmd+Enter 发送，Escape 收起。
 - 设置按五类导航，中英切换保留编辑草稿。聊天核对显示进度与具体错误；兼容的容量证明可在程序或 CLI 升级后恢复，不重发未知请求或擅自换聊。
-- 重置预测页优先醒目显示 Tibo 明确信号与真实目标倒计时，24/48 小时概率作为次要信息，常驻上次重置时间与数据新鲜度，数据来自 [codex-reset.com](https://codex-reset.com/)。社区预测不保证重置，也不替代真实账号额度。详见 [0.5.14 发布说明](docs/releases/0.5.14.md)。
+- 重置预测页展示已公开的重置目标时间、未来 24 小时和 48 小时的社区预测、上次全局重置及数据刷新时间。[预测来源](https://codex-reset.com/)
 - 重置提醒接入 `codex-reset.com` 的受限公开公告与观察数据，显示来源引用、公告/观察截止时间和 stale/offline 状态；公告、观察、Tibo 自述与真实额度确认保持分层。每个本机观察账号的五小时窗口到期后，用挂件文字、一秒四次弹跳和一次短音提醒，去重且可关闭，历史估算标记为待登录确认，网络失败不阻塞启动。
 - 拖动挂件时保持人物大小，支持底角吸附、左右镜像、大小、透明度、置顶和鼠标穿透。人物拖过屏幕中线就会转向，位置会保存，下次打开不用重新摆。
 - 可选窗口内显示：Windows 可将人物固定在 Codex 主窗口内，随窗口移动、收起和展开；macOS 使用独立挂件窗口跟随 Codex 的范围和显隐。
@@ -158,11 +156,7 @@ npm run build:installer
 
 ## 验证范围
 
-Windows 0.5.14 已有主程序、助手与 MCP 同版本、非演示额度、本地控制及用户资料保全的运行证据。最新定向回归通过 47 项测试；隔离气泡检查覆盖双端源码、中英和三种尺寸，共 12 场景、24 张截图。前置容量恢复回归通过 157 项。各项结果只覆盖对应改动，不代表重新通过全量测试。
-
-Worker 关闭生命周期修复后的真实语义后端定向服务回归已通过，之前的 V8 原生崩溃未再复现；检索生命周期回归也通过。完整跨平台套件仍有本机窗口夹具和平台环境相关失败，因此不宣称全量通过。完整真实聊天、Terra 发送、输入焦点手感和长期记忆质量仍需用户反馈。
-
-CI 不代替 Mac 多屏、Spaces、全屏、Retina、声音及登录会话的人工体验。主观音量、动画手感、真实五小时提醒和 Windows 注销重登也仍需人工验收。
+原项目的跨平台安装检查和定向回归记录见 **v0.5.14** 说明。本 fork 的 Windows 更新见对应发布页。[上游 v0.5.14 验证记录](docs/releases/0.5.14.md) · [本 fork 的 v0.5.18 发布说明](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.18)
 
 ## 贡献者
 

@@ -2,11 +2,34 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-Contact: [feeesack9449@gmail.com](mailto:feeesack9449@gmail.com)
+Upstream project and author contact. [Feeesack/codex-maid-widget](https://github.com/Feeesack/codex-maid-widget) · [feeesack9449@gmail.com](mailto:feeesack9449@gmail.com)
 
-A small desktop companion for Codex. It shows your remaining quota and local token usage, and gives a little “duang” when a turn finishes. If you've wandered off to your phone, that might be your cue to come back.
+A desktop companion that shows your Codex quota and local token usage. It can bounce or play a short sound when a turn finishes. This fork adds animated dragon girls and offline Mandarin dictation on Windows.
+
+[Download for Windows x64](https://github.com/yyhJohn/codex-maid-widget/releases/latest) · [Installation](#download-and-install) · [Changelog](CHANGELOG.md)
 
 <img src="assets/icons/app-128.png" width="72" alt="Codex Maid Widget application icon">
+
+## Download and install
+
+| Platform | Release | Installer and verification |
+| --- | --- | --- |
+| Windows x64 | **v0.5.18** from this fork | [Download .exe](https://github.com/yyhJohn/codex-maid-widget/releases/download/v0.5.18/Codex-Maid-Widget-0.5.18-windows-x64-setup.exe) · [SHA-256](https://github.com/yyhJohn/codex-maid-widget/releases/download/v0.5.18/Codex-Maid-Widget-0.5.18-windows-x64-setup.exe.sha256) |
+| macOS 13+, Apple Silicon and Intel | **v0.5.14** from upstream | [Download universal .pkg](https://github.com/Feeesack/codex-maid-widget/releases/download/v0.5.14/Codex-Maid-Widget-0.5.14-macOS-universal.pkg) · [Release notes and SHA-256](https://github.com/Feeesack/codex-maid-widget/releases/tag/v0.5.14) |
+
+1. Run the installer. On Windows, choose the install folder and whether to create a desktop shortcut.
+2. Open **Codex Maid Widget** from the Windows Start menu or the macOS Applications folder. Sign in to the official Codex desktop app to display your account quota.
+3. Use the gear button or right-click the character to open Settings. Choose **简体中文 / English** under **Interface language**.
+
+For Windows reinstalls and upgrades, use your existing widget data directory to reuse settings, installed models, and downloaded animations. The installers include the runtime and an optional local Codex plugin. The upstream Mac app uses ad-hoc signing. Check the supplied SHA-256 if your operating system asks you to confirm the installer's source.
+
+### Windows fork features
+
+- **Offline Mandarin dictation.** Open the widget once, then choose **Install offline voice models** in the **Codex Maid Widget** Start menu folder. The helper downloads and verifies about 3.3 GB of models on a fresh install. After restarting, use the microphone in companion chat. The bundled CPU engine transcribes locally and shows a live preview. The final transcript is appended to the draft for you to review and send.
+- **Animated dragon girls.** Select **GPT Girl · Animated** under **Settings → Characters**. To add **GPT White Dragon · Animated**, open the widget once, run **Install White Dragon animations** from the same Start menu folder, then restart and select the character. The helper downloads and verifies the original author's assets and converts them locally. Both characters have idle, working, completed, and click-to-wave animations. [White Dragon artwork by 風-隐 / jingh12312-rgb](https://github.com/jingh12312-rgb/bailong-desktop-pet/releases/tag/v0.5.1)
+- **Token totals and reset forecast.** v0.5.18 counts non-overlapping continuations of the same Codex session in daily and weekly totals and deduplicates overlapping copies. The 24-hour and 48-hour forecast uses the same figures as the source homepage. The date is labelled **Last global reset**. [Source homepage](https://codex-reset.com/) · [v0.5.18 release notes](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.18)
+
+[Voice and animation setup details](docs/INSTALLATION.md#windows-fork-release)
 
 ## See it in action
 
@@ -20,44 +43,19 @@ These screenshots show the 0.3.48 Windows interface with **synthetic demo data**
 | --- | --- | --- |
 | [<img src="docs/screenshots/release-0.3.48-pages.png" width="270" alt="Bubble-page order, visibility and startup default settings">](docs/screenshots/release-0.3.48-pages.png) | [<img src="docs/screenshots/release-0.3.48-appearance.png" width="270" alt="Appearance settings with independent bottom and side hiding sliders and sound selection">](docs/screenshots/release-0.3.48-appearance.png) | [<img src="docs/screenshots/release-0.3.48-characters.png" width="270" alt="Character library with the two new dragon-girl poses and original characters">](docs/screenshots/release-0.3.48-characters.png) |
 
-## Download and install
-
-**v0.5.14 is released.** Windows x64 and macOS 13+ universal installers are available. This release adds companion chat and persistent memory, archive and usage management, clearer settings, upgrade-safe chat recovery, and reset forecasts with public announcement reminders.
-
-| Platform | Installer |
-| --- | --- |
-| Windows x64 | [Windows installer (.exe)](https://github.com/Feeesack/codex-maid-widget/releases/download/v0.5.14/Codex-Maid-Widget-0.5.14-windows-x64-setup.exe) |
-| macOS 13+, Apple Silicon and Intel | [Universal Mac installer (.pkg)](https://github.com/Feeesack/codex-maid-widget/releases/download/v0.5.14/Codex-Maid-Widget-0.5.14-macOS-universal.pkg) |
-
-Release notes and SHA-256 checksums are on the [Releases](https://github.com/Feeesack/codex-maid-widget/releases) page. The installers include the runtime and optional local Codex plugin, so you don't need to install Node.js or npm, or download the source.
-
-This fork's **Windows x64 v0.5.18** includes offline Mandarin dictation and an optional White Dragon animation installer. Get the [fork release and checksum](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.18) and follow the [voice and White Dragon setup instructions](docs/INSTALLATION.md#windows-fork-release). See the [changelog](CHANGELOG.md).
-
-The [0.3.48 release notes](docs/releases/0.3.48.md) bring together the changes since 0.3.21: paired press/release interactions; five sound choices including DSH Duck; multi-account reset reminders; two new dragon-girl poses; conversation context, compaction and Git status; Motion mirroring; Hugeicons controls; page ordering and visibility; live appearance and corner-hiding previews; and Windows installation-path fixes. Sound sources and their separate license scopes are documented in [audio provenance](docs/interaction-audio.md).
-
-The [0.5.14 release notes](docs/releases/0.5.14.md) describe this release, and the [changelog](CHANGELOG.md) records its preceding local updates. Windows settings, imported characters and original assets are retained. The macOS universal installer has completed native installation and startup checks on Apple Silicon and Intel; hands-on acceptance for Spaces, full screen, multiple displays, Retina, audio and login sessions remains separate.
-
-1. Install and sign in to the official Codex desktop app to see real account quota.
-2. Run the installer, then open Codex Maid Widget from the Windows Start menu or macOS Applications folder.
-3. Use the gear button, right-click the character, or open the system tray/menu bar menu to adjust settings.
-
-From 0.3.49, choose **简体中文 / English** under **Interface language** at the top of Settings. Changes apply immediately and persist across restarts. Chinese remains the default; English has layouts adapted for longer labels. Custom phrases, names and project titles stay as written.
-
-The installers don't yet have developer distribution certificates. The Mac app is ad-hoc signed, and the package has not been notarized by Apple. Your operating system may ask you to confirm its source. Use the downloads from this repository's Releases page and check the supplied checksum.
-
 ## Features
 
 - Quota percentages and reset countdowns, with support for multiple quota buckets. Updates happen automatically, or when you click refresh.
 - Local token totals for today, this week, and the most recently completed turn.
 - A bounce and optional short sound when the widget sees a newly completed turn: “duang.” You can also click the character or use a shortcut to trigger it yourself.
 - Automatic startup alongside Codex. A login helper waits in the background, opens the widget when Codex starts, and closes it after Codex fully quits. You can turn this off in settings.
-- Four built-in characters, a local image library, custom phrases, and bubble colors that match the character.
+- Built-in characters, a local image library, custom phrases, and bubble colors that match the character.
 - Optional text and image chat through your signed-in Codex account, with streamed replies, interruption, model selection and a dedicated companion project. Chat and model-based maintenance consume account quota; no separate API key is needed.
 - Persistent persona, user-preference and fact records, checkpoint archives with original images, offline history search and controlled handoff to a new conversation. Archive titles, tags, favorites and hidden state use separate metadata, preserving original records.
 - Seven chat-management pages: current chat, usage, archive history, memory, handoff and maintenance, dream maintenance, and project/model settings. Native chat token records are separate from the widget's device-wide log totals; missing measurements remain unknown.
 - A readable chat bubble and expandable writing card that preserve the same input field, draft, selection and input-method composition. Enter adds a line, Ctrl/Cmd+Enter sends, and Escape collapses the card.
 - Five settings categories, bilingual navigation and draft preservation. Chat reconciliation reports progress and specific errors; compatible capacity proofs can survive program or CLI upgrades without replaying an unknown request or silently switching threads.
-- A reset forecast page that prioritizes explicit Tibo signals and real target countdowns, with secondary 24/48-hour odds, the last confirmed reset and freshness status, using data from [codex-reset.com](https://codex-reset.com/). Community forecasts do not guarantee a reset or replace your real account quota. See the [0.5.14 release notes](docs/releases/0.5.14.md).
+- The reset forecast page shows announced reset targets, community estimates for the next 24 and 48 hours, the last global reset, and when the data was refreshed. [Forecast source](https://codex-reset.com/)
 - Reset reminders read bounded public announcement and observation data from `codex-reset.com`, show source citations, announcement/observation deadlines and stale/offline state, and keep announcement, observation, Tibo self-report and real quota confirmation separate. Each observed account gets a five-hour expiry reminder with widget text, four bounces in one second and one short sound; reminders deduplicate, can be disabled, and never block startup when the network is unavailable.
 - Dragging with a fixed character size, bottom-corner snapping, mirrored layouts, size and opacity settings, always-on-top, click-through, and remembered window placement. The character turns as you drag it across the screen's midpoint.
 - Optional display inside the Codex window. On Windows, the character is attached to the main window and moves, minimizes and restores with it. On macOS, a separate widget window follows Codex's bounds and visibility.
@@ -180,11 +178,7 @@ Windows and macOS use the same release version. The build stops if their manifes
 
 ## Testing
 
-Windows 0.5.14 has local evidence for matching main-app, helper and MCP versions, non-demo quota, local controls and protected user data. The latest focused regression passed 47 tests; the isolated bubble check passed 12 scenarios with 24 screenshots across both source trees, two languages and three sizes. The preceding recovery regression passed 157 tests. These results cover their stated changes and do not establish a new full-suite pass.
-
-The worker shutdown lifecycle fix passes the focused service regression with the real semantic backend; the former native V8 crash did not recur. The complete cross-platform suite still has local window-fixture and platform-environment failures, so this release is not presented as a full-suite pass. Full real-chat workflows, Terra sending, input-focus feel and long-term memory quality still need user feedback.
-
-CI does not replace hands-on Mac acceptance for multiple monitors, Spaces, full screen, Retina, audio and login sessions. Subjective sound and animation feel, real five-hour reset reminders and Windows sign-out/sign-in also need hands-on acceptance.
+Installation checks and targeted regressions from the original cross-platform release are documented under **v0.5.14**. See the Windows release notes for the changes in this fork. [Upstream v0.5.14 validation](docs/releases/0.5.14.md) · [Windows fork v0.5.18 release](https://github.com/yyhJohn/codex-maid-widget/releases/tag/v0.5.18)
 
 ## Contributors
 
